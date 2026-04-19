@@ -1,5 +1,5 @@
-import { Simulation } from "../src/simulation";
-import { SumRule } from "../src/simulation/rule";
+import { Simulation } from "../../src/simulation";
+import { SumRule } from "../../src/simulation/rule";
 
 describe("Simulation", () => {
   it("starts at generation 0 with default 100x100 grid", () => {
