@@ -28,8 +28,18 @@ If required inputs are missing, request only the missing data before evaluating.
 1. Load [pr-template.md](../../.requirements/pr-template.md).
 2. Read the PR draft markdown and map all sections to template headings.
 3. Validate structural completeness:
-- Summary, Motivation, Changes, Type of Change, Implementation Plan, Testing, Manual validation steps, Documentation Plan, Related Issues, Checklist, Additional Notes.
-4. Validate title quality:
+- Summary, Motivation, Changes, Type of Change, Implementation Plan, Testing, Manual validation steps, Documentation Plan, Related Issues, Checklist, Additional Notes.4. Validate the Implementation Plan in detail (this is a dedicated gate, not part of general structural completeness):
+   - The section must contain at least two phases.
+   - Each phase title must be descriptive and name the goal — titles like "Phase 1 — Changes" are insufficient and must be flagged as Critical.
+   - Each phase must list at least three ordered, concrete implementation steps.
+   - Every step must reference at least one specific file by path.
+   - Every step must state the exact change (e.g. "Add method `foo(): void` to `Bar.ts`"); generic wording such as "update", "modify", or "change the file" must be flagged as Critical.
+   - Every step that introduces a new class, interface, type alias, or exported function must name it explicitly.
+   - Every step that modifies existing logic must describe the before state and after state.
+   - Each phase must include an explicit Pre-condition sentence and a Post-condition sentence.
+   - Dependencies on prior phases must be stated explicitly in each dependent phase.
+   - Flag any phase or step that is vague, file-reference-free, or missing pre/post-conditions as a Critical finding.
+   *(Renumber subsequent validation steps accordingly.)*4. Validate title quality:
 - Enforce Conventional Commits format `<type>(<scope>): <description>`.
 5. Validate evidence requirements:
 - Confirm explicit status/evidence for `npm run lint`, `npm run build`, `npm run typecheck`, and `npm run test`.
