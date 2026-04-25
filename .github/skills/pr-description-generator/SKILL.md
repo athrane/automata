@@ -28,7 +28,15 @@ If any input is missing, ask targeted follow-up questions before drafting.
 1. Inspect current changes and summarize intent.
 2. Propose a Conventional Commits PR title in the format `<type>(<scope>): <description>`.
 3. Load [pr-template.md](../../.requirements/pr-template.md) and populate all required sections.
-4. Build an implementation plan with ordered phases that reflect the actual change sequence.
+4. Build a very detailed implementation plan using ordered phases that reflect the actual change sequence. Apply the following rules for every phase:
+   - Write a descriptive phase title that names the goal, not just a number (e.g. `Phase 1 — Introduce GeometryRule interface`, not `Phase 1 — Changes`).
+   - List at least three concrete, ordered implementation steps inside the phase.
+   - For each step state: (a) the exact file(s) touched, (b) the precise change made (e.g. "Add method `evaluate(state: State): boolean` to `Rule.ts`"), and (c) the reason for the change.
+   - Name any new class, interface, type alias, or exported function explicitly in the step that introduces it.
+   - When modifying existing logic, describe the before state and the after state.
+   - Open each phase with a one-sentence **Pre-condition** (what must already be true before this phase starts) and close it with a one-sentence **Post-condition** (the observable state of the codebase once the phase is done).
+   - If a phase depends on a prior phase, make that dependency explicit (e.g. "Requires Phase 1 to be complete").
+   - Minimum of two phases. Vague steps such as "update the file" or "make the change" are not acceptable and must be rewritten.
 5. Fill testing with concrete evidence:
 - Updated or added test files.
 - Test status (pass/fail/not run).
