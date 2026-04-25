@@ -1,5 +1,6 @@
-import type { Cell, Grid } from "../types";
-import type { Player } from "../player/Player";
+import type { Cell } from "./Cell";
+import type { Grid } from "./Grid";
+import type { Player } from "./player/Player";
 import type { SimulationOptions } from "./SimulationOptions";
 
 /**

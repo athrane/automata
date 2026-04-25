@@ -1,5 +1,5 @@
 import { SumRule } from "../../../src/simulation/rule";
-import type { Grid } from "../../../src/types";
+import type { Grid } from "../../../src/simulation/Grid";
 
 describe("SumRule", () => {
   it("matches when the player neighbor sum is included", () => {

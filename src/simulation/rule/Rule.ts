@@ -1,4 +1,4 @@
-import type { Grid } from "../../types";
+import type { Grid } from "../Grid";
 
 /** Defines the contract for a cell-matching rule used by the simulation. */
 export interface Rule {

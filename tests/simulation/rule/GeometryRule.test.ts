@@ -1,5 +1,5 @@
 import { GeometryRule } from "../../../src/simulation/rule";
-import type { Grid } from "../../../src/types";
+import type { Grid } from "../../../src/simulation/Grid";
 
 describe("GeometryRule", () => {
   it("matches when all 8 neighbours exactly match the pattern", () => {

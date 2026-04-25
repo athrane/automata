@@ -1,4 +1,4 @@
-import type { Rule } from "../simulation/rule/Rule";
+import type { Rule } from "../rule/Rule";
 
 /** Represents a player participating in the simulation. */
 export interface Player {

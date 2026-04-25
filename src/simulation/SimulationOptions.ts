@@ -1,4 +1,4 @@
-import type { Player } from "../player/Player";
+import type { Player } from "./player/Player";
 
 /** Configuration options for creating a Simulation instance. */
 export interface SimulationOptions {

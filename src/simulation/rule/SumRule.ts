@@ -1,4 +1,4 @@
-import type { Grid } from "../../types";
+import type { Grid } from "../Grid";
 import type { Rule } from "./Rule";
 
 /**
