@@ -4,10 +4,17 @@
   "description": "Experiment to test some cellular automata",
   "main": "dist/main.js",
   "scripts": {
-    "test": "jest",
+    "dev": "vite",
+    "preview": "vite preview",
+    "start": "npm run build:node && node dist/main.js",
+    "build": "vite build",
+    "build:node": "npm run clean && tsc -p tsconfig.json",
+    "clean": "node -e \"require('fs').rmSync('dist', {recursive: true, force: true})\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "build": "tsc -p tsconfig.json"
+    "lint:fix": "eslint . --fix"
   },
   "repository": {
     "type": "git",
@@ -21,13 +28,16 @@
     "url": "https://github.com/athrane/automata/issues"
   },
   "homepage": "https://github.com/athrane/automata#readme",
+  "dependencies": {
+    "three": "^0.165.0"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/jest": "^30.0.0",
+    "@types/three": "^0.165.0",
     "eslint": "^10.2.1",
-    "jest": "^30.3.0",
-    "ts-jest": "^29.4.9",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.58.2"
+    "typescript-eslint": "^8.58.2",
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7"
   }
 }
