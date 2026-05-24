@@ -1,12 +1,12 @@
 ---
 name: pr-description-generator
-description: 'Generate a complete GitHub pull request title and description from project changes using the automata PR template. Use when preparing a PR, creating a PR draft, writing PR summary/motivation/testing sections, or saving PR description files to .github/.requirements/pr.'
+description: 'Generate and save a complete GitHub pull request description to .github/.requirements/pr/. Use when preparing a PR, creating a PR draft, writing PR summary/motivation/testing sections, implementing a PR description, saving PR description files to .requirements/pr, or filling in the PR template.'
 argument-hint: 'Provide: issue number, scope, key changes, lint/build/typecheck/test evidence, related issues, and README.md documentation updates.'
 ---
 
 # PR Description Generator
 
-Generate a PR title and full PR description using the template in [pr-template.md](../../.requirements/pr-template.md).
+Generate a PR title and full PR description using the template in [pr-template.md](../../.requirements/pr-template.md), then save the result to `.github/.requirements/pr/`.
 
 ## When to Use
 - You need a complete PR body before opening a pull request.
@@ -15,56 +15,102 @@ Generate a PR title and full PR description using the template in [pr-template.m
 - You want the PR description saved as a markdown artifact in `.github/.requirements/pr/`.
 
 ## Inputs to Collect
-- Branch name and optional scope.
-- Why the change was made (motivation).
-- Files changed, including deleted files.
-- Validation evidence for `npm run lint`, `npm run build`, `npm run typecheck`, and `npm run test`.
-- Related issues (`Closes #...`, `Related to #...`).
-- README.md documentation updates for this PR.
 
-If any input is missing, ask targeted follow-up questions before drafting.
+Gather the following before drafting. If any are missing, ask targeted follow-up questions.
+
+| Input | Notes |
+|-------|-------|
+| Issue number | Used for the output filename and `Closes #` link |
+| Branch name and scope | Drives the Conventional Commits title `<type>(<scope>)` |
+| Motivation | Why the change was needed |
+| Files changed | All added, modified, and deleted files |
+| Validation evidence | Results of `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test` |
+| Related issues | `Closes #…` or `Related to #…` |
+| README.md documentation updates | What was changed or "No changes required" |
 
 ## Procedure
-1. Inspect current changes and summarize intent.
-2. Propose a Conventional Commits PR title in the format `<type>(<scope>): <description>`.
-3. Load [pr-template.md](../../.requirements/pr-template.md) and populate all required sections.
-4. Build a very detailed implementation plan using ordered phases that reflect the actual change sequence. Apply the following rules for every phase:
-   - Write a descriptive phase title that names the goal, not just a number (e.g. `Phase 1 — Introduce GeometryRule interface`, not `Phase 1 — Changes`).
-   - List at least three concrete, ordered implementation steps inside the phase.
-   - For each step state: (a) the exact file(s) touched, (b) the precise change made (e.g. "Add method `evaluate(state: State): boolean` to `Rule.ts`"), and (c) the reason for the change.
-   - Name any new class, interface, type alias, or exported function explicitly in the step that introduces it.
-   - When modifying existing logic, describe the before state and the after state.
-   - Open each phase with a one-sentence **Pre-condition** (what must already be true before this phase starts) and close it with a one-sentence **Post-condition** (the observable state of the codebase once the phase is done).
-   - If a phase depends on a prior phase, make that dependency explicit (e.g. "Requires Phase 1 to be complete").
-   - Minimum of two phases. Vague steps such as "update the file" or "make the change" are not acceptable and must be rewritten.
-5. Fill testing with concrete evidence:
-- Updated or added test files.
-- Test status (pass/fail/not run).
-- `npm run lint` status and relevant output summary.
-- `npm run build` status and relevant output summary.
-- `npm run typecheck` status and relevant output summary.
-- Manual validation steps as a table.
-6. Handle decision points:
-- If there are no deleted files, replace the deleted files section with `- None`.
-- Always include the Documentation Plan section and add a row for `README.md` with the documentation changes made for this PR.
-- If tests were not run, explicitly state that and why.
-- If multiple change types apply, check all relevant boxes in Type of Change.
-7. Save the output to `.github/.requirements/pr/<issue-number>-<slug>.md`.
-8. Final validation against the template:
-- Title uses Conventional Commits format.
-- Summary is 1-3 sentences.
-- Every changed file has a description in the Changes section.
-- Testing section is truthful and specific.
-- Validation evidence includes lint/build/typecheck/test results.
-- Documentation Plan is present and includes `README.md`.
-- Checklist items match the known validation state.
+
+### Step 1 — Inspect changes
+Run `git diff --name-status HEAD` (or equivalent) to list all touched files. Summarize the intent of the PR in one sentence.
+
+### Step 2 — Propose a PR title
+Format: `<type>(<scope>): <description>` using [Conventional Commits](https://www.conventionalcommits.org/).  
+Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `style`.
+
+### Step 3 — Fill each template section
+
+Load [pr-template.md](../../.requirements/pr-template.md) and populate every section:
+
+| Section | Rules |
+|---------|-------|
+| **Summary** | 1–3 sentences, no bullet points |
+| **Motivation** | State the problem solved, not the solution |
+| **Files Deleted** | One bullet per deleted file with reason; write `- None` if no deletions |
+| **Files Updated** | One bullet per changed file with a concrete description of what changed |
+| **Type of Change** | Check all boxes that apply |
+| **Implementation Plan** | See Step 4 |
+| **Testing** | See Step 5 |
+| **Documentation Plan** | Always include; always add a `README.md` row |
+| **Related Issues** | `Closes #<n>` or `Related to #<n>` |
+| **Checklist** | Check items only when evidence confirms they pass |
+| **Additional Notes** | Optional — add screenshots, tradeoffs, or open questions |
+
+### Step 4 — Build the implementation plan
+
+Write ordered phases that reflect the actual change sequence. Every phase must satisfy:
+
+- **Title**: Names the goal, not just a number (e.g. `Phase 1 — Introduce GeometryRule interface`).
+- **Pre-condition**: One sentence stating what must be true before the phase starts.
+- **Steps**: At least three concrete, ordered steps. Each step names (a) the exact file(s) touched, (b) the precise change (e.g. "Add method `evaluate(state: State): boolean` to `Rule.ts`"), and (c) the reason.
+- **Post-condition**: One sentence describing the observable state of the codebase once the phase finishes.
+- **Dependencies**: If a phase depends on a prior phase, state it explicitly.
+- **Minimum two phases.** Vague steps such as "update the file" or "make the change" are not acceptable.
+
+### Step 5 — Fill testing evidence
+
+- List every test file added or updated.
+- State test status honestly: `passing`, `failing`, or `not run — <reason>`.
+- Provide one-line summaries for `npm run lint`, `npm run build`, `npm run typecheck`, and `npm run test`.
+- Fill the manual validation table with at least one verification step per major behavior change.
+
+### Step 6 — Handle edge cases
+
+- No deleted files → replace the section content with `- None` (keep the heading).
+- Tests not run → explicitly state why in the Testing section.
+- Multiple change types → check all relevant Type of Change boxes.
+- No documentation changes → keep the Documentation Plan section and write "No changes required."
+
+### Step 7 — Save the output
+
+Write the completed description to:
+
+```
+.github/.requirements/pr/<issue-number>-<slug>.md
+```
+
+Where `<slug>` is a short kebab-case summary of the PR title (e.g. `42-add-geometry-rule.md`).
+
+### Step 8 — Final validation
+
+Before confirming completion, verify:
+
+- [ ] Title uses Conventional Commits format.
+- [ ] Summary is 1–3 sentences.
+- [ ] Every changed file appears in the Changes section.
+- [ ] Testing section is truthful and specific — no claimed passes without evidence.
+- [ ] Validation evidence covers lint / build / typecheck / test.
+- [ ] Documentation Plan is present and includes a `README.md` row.
+- [ ] Checklist items reflect actual validation state.
+- [ ] File saved to `.github/.requirements/pr/`.
 
 ## Output Format
-- File path: `.github/.requirements/pr/<issue-number>-<slug>.md`
-- Content: Fully populated PR markdown body suitable for GitHub PR description.
+
+- **File path**: `.github/.requirements/pr/<issue-number>-<slug>.md`
+- **Content**: Fully populated PR markdown body suitable for pasting directly into a GitHub PR description.
 
 ## Quality Bar
+
 - Prefer precise, reviewable statements over generic text.
-- Do not claim tests/checks passed unless confirmed.
+- Do not claim tests or checks passed unless confirmed by output evidence.
 - Keep language concise and actionable for reviewers.
 - Keep section order aligned with [pr-template.md](../../.requirements/pr-template.md).

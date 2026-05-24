@@ -1,9 +1,9 @@
-import { Simulation } from "../../src/simulation";
+import { Simulation, SimulationOptions } from "../../src/simulation";
 import { SumRule } from "../../src/simulation/rule";
 
 describe("Simulation", () => {
   it("starts at generation 0 with default 100x100 grid", () => {
-    const simulation = new Simulation();
+    const simulation = Simulation.create();
 
     const grid = simulation.getGrid();
 
@@ -15,7 +15,7 @@ describe("Simulation", () => {
   });
 
   it("supports custom rectangular grid size", () => {
-    const simulation = new Simulation({ width: 3, height: 2 });
+    const simulation = Simulation.create(SimulationOptions.create(3, 2));
 
     const grid = simulation.getGrid();
 
@@ -24,11 +24,9 @@ describe("Simulation", () => {
   });
 
   it("calculates the next generation when run is called", () => {
-    const simulation = new Simulation({
-      width: 3,
-      height: 3,
-      players: [{ id: 1, rules: [new SumRule([2])] }],
-    });
+    const simulation = Simulation.create(
+      SimulationOptions.create(3, 3, [{ id: 1, rules: [new SumRule([2])] }]),
+    );
 
     simulation.setCell(0, 0, 1);
     simulation.setCell(0, 1, 1);
@@ -41,14 +39,12 @@ describe("Simulation", () => {
   });
 
   it("supports multiple players with different rulesets", () => {
-    const simulation = new Simulation({
-      width: 3,
-      height: 3,
-      players: [
+    const simulation = Simulation.create(
+      SimulationOptions.create(3, 3, [
         { id: 1, rules: [new SumRule([1])] },
         { id: 2, rules: [new SumRule([1])] },
-      ],
-    });
+      ]),
+    );
 
     simulation.setCell(0, 0, 1);
     simulation.setCell(0, 1, 2);

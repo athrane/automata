@@ -1,7 +1,7 @@
 import type { Cell } from "./Cell";
 import type { Grid } from "./Grid";
 import type { Player } from "./player/Player";
-import type { SimulationOptions } from "./SimulationOptions";
+import { SimulationOptions } from "./SimulationOptions";
 
 /**
  * Manages the simulation grid and advances it through generations
@@ -25,23 +25,26 @@ export class Simulation {
   private grid: Grid;
 
   /**
-   * @param options - Optional configuration for grid dimensions and players.
-   * @throws {RangeError} If width or height is not a positive number.
+   * @param options - Configuration for grid dimensions and players.
    */
-  constructor(options: SimulationOptions = {}) {
-    if (options.width !== undefined && options.width <= 0) {
-      throw new RangeError("width must be a positive number");
-    }
-    if (options.height !== undefined && options.height <= 0) {
-      throw new RangeError("height must be a positive number");
-    }
-    this.width = options.width ?? 100;
-    this.height = options.height ?? 100;
-    this.players = options.players ?? [];
+  private constructor(options: SimulationOptions) {
+    this.width = options.width;
+    this.height = options.height;
+    this.players = options.players;
     this.generation = 0;
     this.grid = Array.from({ length: this.height }, () =>
       Array.from({ length: this.width }, () => null as Cell),
     );
+  }
+
+  /**
+   * Creates a new {@link Simulation} instance.
+   *
+   * @param options - Optional configuration for grid dimensions and players.
+   * @returns A new Simulation instance.
+   */
+  public static create(options?: SimulationOptions): Simulation {
+    return new Simulation(options ?? SimulationOptions.create());
   }
 
   /** Returns a shallow copy of the current grid. */
