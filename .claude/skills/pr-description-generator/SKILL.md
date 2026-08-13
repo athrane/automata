@@ -6,7 +6,7 @@ argument-hint: 'Provide: issue number, scope, key changes, lint/build/typecheck/
 
 # PR Description Generator
 
-Generate a PR title and full PR description using the template in [pr-template.md](../../.requirements/pr-template.md), then save the result to `.github/.requirements/pr/`.
+Generate a PR title and full PR description using the template in [pr-template.md](../../../.github/.requirements/pr-template.md), then save the result to `.github/.requirements/pr/`.
 
 ## When to Use
 - You need a complete PR body before opening a pull request.
@@ -39,7 +39,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `style`.
 
 ### Step 3 — Fill each template section
 
-Load [pr-template.md](../../.requirements/pr-template.md) and populate every section:
+Load [pr-template.md](../../../.github/.requirements/pr-template.md) and populate every section:
 
 | Section | Rules |
 |---------|-------|
@@ -113,4 +113,4 @@ Before confirming completion, verify:
 - Prefer precise, reviewable statements over generic text.
 - Do not claim tests or checks passed unless confirmed by output evidence.
 - Keep language concise and actionable for reviewers.
-- Keep section order aligned with [pr-template.md](../../.requirements/pr-template.md).
+- Keep section order aligned with [pr-template.md](../../../.github/.requirements/pr-template.md).

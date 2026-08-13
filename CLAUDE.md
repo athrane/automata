@@ -1,4 +1,4 @@
-# Copilot Instructions
+# Claude Code Instructions
 
 ## Response Style
 Be brief. Target 1–3 sentences for simple answers; expand only for complex work or when asked. Skip preamble, summaries, and explanations of what you just did.
@@ -7,7 +7,7 @@ Be brief. Target 1–3 sentences for simple answers; expand only for complex wor
 Only make changes that are directly requested. Do not add features, refactoring, comments, docstrings, type annotations, or error handling beyond what was asked.
 
 ## Project Skills
-Domain knowledge is packaged in `.github/skills/`. Load a skill only when its area is relevant — do not pre-load all skills.
+Domain knowledge is packaged in `.claude/skills/`. Load a skill only when its area is relevant — do not pre-load all skills.
 
 | Skill | When to load |
 |---|---|

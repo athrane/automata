@@ -6,7 +6,7 @@ argument-hint: 'Provide: path to PR draft markdown, issue number, and any comman
 
 # PR Draft Validator
 
-Validate an existing PR draft and produce a structured compliance report using [pr-template.md](../../.requirements/pr-template.md) as the source of truth.
+Validate an existing PR draft and produce a structured compliance report using [pr-template.md](../../../.github/.requirements/pr-template.md) as the source of truth.
 
 ## When to Use
 - You already have a PR draft markdown file and want a quality gate before publishing.
@@ -25,7 +25,7 @@ Validate an existing PR draft and produce a structured compliance report using [
 If required inputs are missing, request only the missing data before evaluating.
 
 ## Validation Procedure
-1. Load [pr-template.md](../../.requirements/pr-template.md).
+1. Load [pr-template.md](../../../.github/.requirements/pr-template.md).
 2. Read the PR draft markdown and map all sections to template headings.
 3. Validate structural completeness:
 - Summary, Motivation, Changes, Type of Change, Implementation Plan, Testing, Manual validation steps, Documentation Plan, Related Issues, Checklist, Additional Notes.4. Validate the Implementation Plan in detail (this is a dedicated gate, not part of general structural completeness):
