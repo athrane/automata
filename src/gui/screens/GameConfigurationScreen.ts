@@ -1,4 +1,5 @@
 import { AVAILABLE_RULE_PRESETS } from '../AvailableRulePresets';
+import { selectRandomPresetIndices } from '../RandomRulePresetSelection';
 
 import type { RulePreset } from '../RulePreset';
 
@@ -9,7 +10,9 @@ const REQUIRED_RULE_COUNT = 3;
  * Renders the game-configuration screen as a full-page DOM overlay.
  *
  * The player selects exactly {@link REQUIRED_RULE_COUNT} rule presets.
- * A "Reset" button clears the selection; "Start game" is enabled only when
+ * Each time the screen is shown, {@link REQUIRED_RULE_COUNT} presets are
+ * preselected at random, so the screen opens in a startable state.
+ * A "Reset" button clears that preselection; "Start game" is enabled only when
  * the correct number of rules are selected.
  *
  * Use {@link GameConfigurationScreen.create} to construct an instance.
@@ -91,10 +94,34 @@ export class GameConfigurationScreen {
       ruleList.appendChild(row);
     }
 
+    const preselected = selectRandomPresetIndices(
+      AVAILABLE_RULE_PRESETS.length,
+      REQUIRED_RULE_COUNT,
+      Math.random,
+    );
+    for (const index of preselected) {
+      this.selectedIndices.add(index);
+    }
+    const limitReached = this.selectedIndices.size >= REQUIRED_RULE_COUNT;
+    for (let i = 0; i < checkboxes.length; i += 1) {
+      const isSelected = this.selectedIndices.has(i);
+      checkboxes[i].checked = isSelected;
+      checkboxes[i].disabled = limitReached && !isSelected;
+    }
+
     root.appendChild(ruleList);
 
     const buttonRow = document.createElement('div');
     buttonRow.style.cssText = 'display:flex;gap:1rem;';
+
+    startButton.textContent = 'Start game';
+    startButton.disabled = this.selectedIndices.size !== REQUIRED_RULE_COUNT;
+    startButton.style.cssText = 'padding:0.5rem 1.5rem;font-size:1rem;cursor:pointer;';
+    startButton.addEventListener('click', () => {
+      const selected = [...this.selectedIndices].map((idx) => AVAILABLE_RULE_PRESETS[idx]);
+      this.onStartGame(selected);
+    });
+    buttonRow.appendChild(startButton);
 
     const resetButton = document.createElement('button');
     resetButton.textContent = 'Reset';
@@ -108,15 +135,6 @@ export class GameConfigurationScreen {
       startButton.disabled = true;
     });
     buttonRow.appendChild(resetButton);
-
-    startButton.textContent = 'Start game';
-    startButton.disabled = true;
-    startButton.style.cssText = 'padding:0.5rem 1.5rem;font-size:1rem;cursor:pointer;';
-    startButton.addEventListener('click', () => {
-      const selected = [...this.selectedIndices].map((idx) => AVAILABLE_RULE_PRESETS[idx]);
-      this.onStartGame(selected);
-    });
-    buttonRow.appendChild(startButton);
 
     root.appendChild(buttonRow);
 
