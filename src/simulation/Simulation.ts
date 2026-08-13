@@ -63,7 +63,12 @@ export class Simulation {
 
   /**
    * Advances the simulation by one generation and returns the new grid.
-   * Each cell is assigned to the first player whose rules all match.
+   * Each cell is assigned to the first player with at least one matching rule.
+   *
+   * A player's rules are combined with OR, not AND: each rule (e.g. a "born"
+   * or a "survive" preset) independently grants the cell, since requiring
+   * every selected rule to match the same cell simultaneously is almost
+   * never satisfiable and causes the grid to die out within a generation or two.
    */
   run(): Grid {
     const nextGrid: Grid = Array.from({ length: this.height }, () =>
@@ -73,7 +78,7 @@ export class Simulation {
     for (let y = 0; y < this.height; y += 1) {
       for (let x = 0; x < this.width; x += 1) {
         for (const player of this.players) {
-          const isMatch = player.rules.every((rule) =>
+          const isMatch = player.rules.some((rule) =>
             rule.matches(this.grid, x, y, player.id),
           );
 
@@ -89,5 +94,34 @@ export class Simulation {
     this.generation += 1;
 
     return this.getGrid();
+  }
+
+  /**
+   * Returns `true` when at least one cell in the grid is occupied (non-null).
+   */
+  public hasLivingCells(): boolean {
+    return this.grid.some((row) => row.some((cell) => cell !== null));
+  }
+
+  /**
+   * Randomly populates the grid with cells owned by `playerId`.
+   *
+   * Each cell is independently set to `playerId` with probability `density`.
+   *
+   * @param density - Fraction of cells to populate, in the range [0, 1].
+   * @param playerId - The player id written into each populated cell.
+   * @throws {RangeError} If density is not in the range [0, 1].
+   */
+  public seedRandom(density: number, playerId: number): void {
+    if (density < 0 || density > 1) {
+      throw new RangeError('density must be between 0 and 1');
+    }
+    for (let y = 0; y < this.height; y += 1) {
+      for (let x = 0; x < this.width; x += 1) {
+        if (Math.random() < density) {
+          this.grid[y][x] = playerId;
+        }
+      }
+    }
   }
 }

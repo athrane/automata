@@ -38,6 +38,23 @@ describe("Simulation", () => {
     expect(nextGrid[0][0]).toBeNull();
   });
 
+  it("combines a player's multiple rules with OR, not AND", () => {
+    // These two rules can never both match the same cell (a neighbor count
+    // cannot be both 1 and 4 at once). An AND combination would therefore
+    // never populate any cell, starving the grid within a generation.
+    const simulation = Simulation.create(
+      SimulationOptions.create(3, 3, [
+        { id: 1, rules: [new SumRule([1]), new SumRule([4])] },
+      ]),
+    );
+
+    simulation.setCell(0, 0, 1);
+
+    const nextGrid = simulation.run();
+
+    expect(nextGrid[1][1]).toBe(1);
+  });
+
   it("supports multiple players with different rulesets", () => {
     const simulation = Simulation.create(
       SimulationOptions.create(3, 3, [

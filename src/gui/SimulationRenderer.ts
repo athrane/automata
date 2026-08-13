@@ -16,6 +16,12 @@ const CAMERA_Z = 1;
 const DEFAULT_CELL_COLOR = 0x000000;
 
 /**
+ * Minimum number of generations that must elapse before a grid with no living
+ * cells triggers the game-over callback.
+ */
+const MINIMUM_GENERATIONS_BEFORE_GAME_OVER = 5;
+
+/**
  * Renders a {@link Simulation} grid in a browser using Three.js.
  *
  * Use the static factory method {@link SimulationRenderer.create} to construct an instance.
@@ -110,12 +116,27 @@ export class SimulationRenderer {
   /**
    * Starts the animation loop: each frame advances the simulation by one generation,
    * synchronises the scene, and renders it. The loop continues until {@link stop} is called.
+   *
+   * When all cells die after at least {@link MINIMUM_GENERATIONS_BEFORE_GAME_OVER} generations,
+   * the loop stops automatically and `onGameOver` is invoked with the final generation count.
+   *
+   * @param onGameOver - Optional callback invoked when the game ends. Receives the final generation number.
    */
-  public start(): void {
+  public start(onGameOver?: (generation: number) => void): void {
     const loop = (): void => {
       this.simulation.run();
       this.render();
       this.renderer.render(this.scene, this.camera);
+
+      if (
+        this.simulation.generation >= MINIMUM_GENERATIONS_BEFORE_GAME_OVER &&
+        !this.simulation.hasLivingCells()
+      ) {
+        this.stop();
+        onGameOver?.(this.simulation.generation);
+        return;
+      }
+
       this.frameId = requestAnimationFrame(loop);
     };
 
@@ -130,5 +151,14 @@ export class SimulationRenderer {
       cancelAnimationFrame(this.frameId);
       this.frameId = null;
     }
+  }
+
+  /**
+   * Stops the animation loop and removes the canvas element from the DOM.
+   * Call this when discarding a renderer to avoid stale canvases.
+   */
+  public destroy(): void {
+    this.stop();
+    this.renderer.domElement.remove();
   }
 }
