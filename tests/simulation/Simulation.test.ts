@@ -70,4 +70,79 @@ describe("Simulation", () => {
 
     expect(nextGrid[1][1]).toBe(1);
   });
+
+  describe("getCellCounts", () => {
+    it("reports zero for every registered player on an empty grid", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, [
+          { id: 1, rules: [] },
+          { id: 2, rules: [] },
+        ]),
+      );
+
+      const counts = simulation.getCellCounts();
+
+      expect(counts.get(1)).toBe(0);
+      expect(counts.get(2)).toBe(0);
+    });
+
+    it("counts cells against their owning player", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, [
+          { id: 1, rules: [] },
+          { id: 2, rules: [] },
+        ]),
+      );
+
+      simulation.setCell(0, 0, 1);
+      simulation.setCell(1, 0, 1);
+      simulation.setCell(2, 2, 2);
+
+      const counts = simulation.getCellCounts();
+
+      expect(counts.get(1)).toBe(2);
+      expect(counts.get(2)).toBe(1);
+    });
+
+    it("keeps a player with no cells in the result", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, [
+          { id: 1, rules: [] },
+          { id: 2, rules: [] },
+        ]),
+      );
+
+      simulation.setCell(0, 0, 1);
+
+      const counts = simulation.getCellCounts();
+
+      expect(counts.size).toBe(2);
+      expect(counts.get(2)).toBe(0);
+    });
+  });
+
+  describe("seedRandom", () => {
+    it("leaves cells owned by an earlier player untouched", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, [
+          { id: 1, rules: [] },
+          { id: 2, rules: [] },
+        ]),
+      );
+
+      simulation.setCell(0, 0, 1);
+      simulation.seedRandom(1, 2);
+
+      const grid = simulation.getGrid();
+
+      expect(grid[0][0]).toBe(1);
+      expect(grid[0][1]).toBe(2);
+    });
+
+    it("rejects a density outside the range [0, 1]", () => {
+      const simulation = Simulation.create(SimulationOptions.create(3, 3));
+
+      expect(() => { simulation.seedRandom(1.5, 1); }).toThrow(RangeError);
+    });
+  });
 });

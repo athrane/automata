@@ -56,14 +56,45 @@ describe("GeometryRule", () => {
     expect(result).toBe(false);
   });
 
-  it("treats out-of-bounds neighbours as false", () => {
+  it("reads the left neighbour of column 0 from the last column", () => {
     // Arrange
-    // Corner cell (0,0): all neighbours at negative coords are out-of-bounds (false).
-    // Pattern expects all 8 neighbours to be false.
+    // Corner cell (0,0): its left neighbour wraps to (2,0).
     const grid: Grid = [
-      [null, null],
-      [null, null],
+      [null, null, 1],
+      [null, null, null],
+      [null, null, null],
     ];
+    const pattern = [false, false, false, true, false, false, false, false];
+    const rule = new GeometryRule(pattern);
+
+    // Act
+    const result = rule.matches(grid, 0, 0, 1);
+
+    // Assert
+    expect(result).toBe(true);
+  });
+
+  it("reads the top neighbour of row 0 from the last row", () => {
+    // Arrange
+    // Corner cell (0,0): its top neighbour wraps to (0,2).
+    const grid: Grid = [
+      [null, null, null],
+      [null, null, null],
+      [1, null, null],
+    ];
+    const pattern = [false, true, false, false, false, false, false, false];
+    const rule = new GeometryRule(pattern);
+
+    // Act
+    const result = rule.matches(grid, 0, 0, 1);
+
+    // Assert
+    expect(result).toBe(true);
+  });
+
+  it("matches an all-false pattern on an empty grid", () => {
+    // Arrange
+    const grid: Grid = [];
     const pattern = [false, false, false, false, false, false, false, false];
     const rule = new GeometryRule(pattern);
 

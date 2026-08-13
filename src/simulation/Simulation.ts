@@ -104,9 +104,38 @@ export class Simulation {
   }
 
   /**
-   * Randomly populates the grid with cells owned by `playerId`.
+   * Counts the living cells owned by each player.
    *
-   * Each cell is independently set to `playerId` with probability `density`.
+   * Every registered player is present in the result, so a player with no
+   * remaining cells reports `0` rather than being omitted.
+   *
+   * @returns A map from player id to the number of cells that player owns.
+   */
+  public getCellCounts(): Map<number, number> {
+    const counts = new Map<number, number>();
+    for (const player of this.players) {
+      counts.set(player.id, 0);
+    }
+
+    for (const row of this.grid) {
+      for (const cell of row) {
+        if (cell === null) {
+          continue;
+        }
+
+        counts.set(cell, (counts.get(cell) ?? 0) + 1);
+      }
+    }
+
+    return counts;
+  }
+
+  /**
+   * Randomly populates the empty cells of the grid with cells owned by `playerId`.
+   *
+   * Each empty cell is independently set to `playerId` with probability `density`.
+   * Cells that are already occupied are left untouched, so seeding several
+   * players in sequence does not let a later player overwrite an earlier one.
    *
    * @param density - Fraction of cells to populate, in the range [0, 1].
    * @param playerId - The player id written into each populated cell.
@@ -118,6 +147,10 @@ export class Simulation {
     }
     for (let y = 0; y < this.height; y += 1) {
       for (let x = 0; x < this.width; x += 1) {
+        if (this.grid[y][x] !== null) {
+          continue;
+        }
+
         if (Math.random() < density) {
           this.grid[y][x] = playerId;
         }

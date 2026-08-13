@@ -1,11 +1,9 @@
 import { StateMachine } from '../state';
 import { GameConfigurationScreen, GameOverScreen, GamePlayingScreen, TitleScreen } from './screens';
+import { HUMAN_PARTICIPANT } from './GameParticipants';
 import { HiScore } from './HiScore';
 import type { HiScoreEntry } from './HiScoreEntry';
 import type { RulePreset } from './RulePreset';
-
-/** Display name recorded with every hi-score entry. */
-const PLAYER_NAME = 'Player 1';
 
 /**
  * Orchestrates game-state transitions and coordinates all screens and the
@@ -13,6 +11,9 @@ const PLAYER_NAME = 'Player 1';
  *
  * The state flow is:
  * `title-screen` → `game-configuration` → `game` → `game-over` → `title-screen`
+ *
+ * A running game can also be abandoned via the in-game "Exit" button, which
+ * moves directly from `game` back to `title-screen`.
  *
  * Use the static factory method {@link GameController.create} to construct an instance.
  */
@@ -44,6 +45,7 @@ export class GameController {
     this.gamePlayingScreen = GamePlayingScreen.create(
       container,
       (generation) => { this.handleGameOver(generation); },
+      () => { this.handleExitGame(); },
     );
 
     this.gameOverScreen = GameOverScreen.create(
@@ -89,10 +91,20 @@ export class GameController {
     this.titleScreen.show();
   }
 
+  /**
+   * Abandons the running game and returns to the title screen.
+   * No hi-score entry is recorded, since an abandoned game is not a completed run.
+   */
+  private handleExitGame(): void {
+    this.stateMachine.transition('title-screen');
+    this.gamePlayingScreen.hide();
+    this.titleScreen.show();
+  }
+
   private handleGameOver(generation: number): void {
     this.stateMachine.transition('game-over');
 
-    const entry: HiScoreEntry = { name: PLAYER_NAME, score: generation };
+    const entry: HiScoreEntry = { name: HUMAN_PARTICIPANT.name, score: generation };
     this.hiScore.addEntry(entry);
 
     this.gameOverScreen.show();

@@ -14,16 +14,98 @@ describe("SumRule", () => {
     expect(rule.matches(grid, 1, 1, 1)).toBe(true);
   });
 
-  it("ignores out-of-bounds neighbors", () => {
-    const grid: Grid = [
-      [1, null],
-      [null, null],
-    ];
+  describe("toroidal wrap-around", () => {
+    it("reads the left neighbor of column 0 from the last column", () => {
+      // Arrange: only the wrapped left neighbor of (0,0) is populated
+      const grid: Grid = [
+        [null, null, 1],
+        [null, null, null],
+        [null, null, null],
+      ];
+      const rule = new SumRule([1]);
 
-    const rule = new SumRule([1]);
+      // Act
+      const result = rule.matches(grid, 0, 0, 1);
 
-    expect(rule.matches(grid, 0, 0, 1)).toBe(false);
-    expect(rule.matches(grid, 1, 1, 1)).toBe(true);
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it("reads the right neighbor of the last column from column 0", () => {
+      // Arrange: only the wrapped right neighbor of (2,0) is populated
+      const grid: Grid = [
+        [1, null, null],
+        [null, null, null],
+        [null, null, null],
+      ];
+      const rule = new SumRule([1]);
+
+      // Act
+      const result = rule.matches(grid, 2, 0, 1);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it("reads the top neighbor of row 0 from the last row", () => {
+      // Arrange: only the wrapped top neighbor of (0,0) is populated
+      const grid: Grid = [
+        [null, null, null],
+        [null, null, null],
+        [1, null, null],
+      ];
+      const rule = new SumRule([1]);
+
+      // Act
+      const result = rule.matches(grid, 0, 0, 1);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it("reads the bottom neighbor of the last row from row 0", () => {
+      // Arrange: only the wrapped bottom neighbor of (0,2) is populated
+      const grid: Grid = [
+        [1, null, null],
+        [null, null, null],
+        [null, null, null],
+      ];
+      const rule = new SumRule([1]);
+
+      // Act
+      const result = rule.matches(grid, 0, 2, 1);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it("gives a corner cell the full eight-neighbor count", () => {
+      // Arrange: every cell except the corner (0,0) is populated
+      const grid: Grid = [
+        [null, 1, 1],
+        [1, 1, 1],
+        [1, 1, 1],
+      ];
+      const rule = new SumRule([8]);
+
+      // Act
+      const result = rule.matches(grid, 0, 0, 1);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it("counts zero neighbors on an empty grid", () => {
+      // Arrange
+      const grid: Grid = [];
+      const rule = new SumRule([0]);
+
+      // Act
+      const result = rule.matches(grid, 0, 0, 1);
+
+      // Assert
+      expect(result).toBe(true);
+    });
   });
 
   it("throws TypeError when sums is not an array", () => {

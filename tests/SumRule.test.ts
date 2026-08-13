@@ -14,16 +14,23 @@ describe("SumRule", () => {
     expect(rule.matches(grid, 1, 1, 1)).toBe(true);
   });
 
-  it("ignores out-of-bounds neighbors", () => {
-    const grid: Grid = [
-      [1, null],
-      [null, null],
+  it("wraps neighbors around the grid edges", () => {
+    // Left neighbor of (0,0) is (2,0); top neighbor of (0,0) is (0,2).
+    const horizontal: Grid = [
+      [null, null, 1],
+      [null, null, null],
+      [null, null, null],
+    ];
+    const vertical: Grid = [
+      [null, null, null],
+      [null, null, null],
+      [1, null, null],
     ];
 
     const rule = new SumRule([1]);
 
-    expect(rule.matches(grid, 0, 0, 1)).toBe(false);
-    expect(rule.matches(grid, 1, 1, 1)).toBe(true);
+    expect(rule.matches(horizontal, 0, 0, 1)).toBe(true);
+    expect(rule.matches(vertical, 0, 0, 1)).toBe(true);
   });
 
   it("excludes central cell from count by default", () => {

@@ -21,6 +21,9 @@ const DEFAULT_CELL_COLOR = 0x000000;
  */
 const MINIMUM_GENERATIONS_BEFORE_GAME_OVER = 5;
 
+/** Frames each generation is held for until {@link SimulationRenderer.setFramesPerGeneration} says otherwise. */
+const DEFAULT_FRAMES_PER_GENERATION = 1;
+
 /**
  * Renders a {@link Simulation} grid in a browser using Three.js.
  *
@@ -34,6 +37,8 @@ export class SimulationRenderer {
   private readonly camera: THREE.OrthographicCamera;
   private readonly meshGrid: THREE.Mesh[][];
   private frameId: number | null;
+  private framesPerGeneration: number;
+  private frameCount: number;
 
   /**
    * Private constructor — use {@link SimulationRenderer.create} instead.
@@ -56,6 +61,8 @@ export class SimulationRenderer {
     );
     this.meshGrid = [];
     this.frameId = null;
+    this.framesPerGeneration = DEFAULT_FRAMES_PER_GENERATION;
+    this.frameCount = 0;
   }
 
   /**
@@ -114,8 +121,28 @@ export class SimulationRenderer {
   }
 
   /**
-   * Starts the animation loop: each frame advances the simulation by one generation,
-   * synchronises the scene, and renders it. The loop continues until {@link stop} is called.
+   * Sets how many animation frames each generation is held on screen.
+   *
+   * A value of 1 advances the simulation once per frame, which is the fastest
+   * rate supported; higher values slow the simulation down without affecting
+   * the frame rate the scene is rendered at.
+   *
+   * @param frames - Number of frames per generation. Must be at least 1.
+   * @throws {RangeError} If frames is less than 1.
+   */
+  public setFramesPerGeneration(frames: number): void {
+    if (frames < 1) {
+      throw new RangeError('frames must be at least 1');
+    }
+
+    this.framesPerGeneration = frames;
+    this.frameCount = 0;
+  }
+
+  /**
+   * Starts the animation loop: each frame synchronises the scene and renders it,
+   * advancing the simulation by one generation every `framesPerGeneration` frames.
+   * The loop continues until {@link stop} is called.
    *
    * When all cells die after at least {@link MINIMUM_GENERATIONS_BEFORE_GAME_OVER} generations,
    * the loop stops automatically and `onGameOver` is invoked with the final generation count.
@@ -124,7 +151,12 @@ export class SimulationRenderer {
    */
   public start(onGameOver?: (generation: number) => void): void {
     const loop = (): void => {
-      this.simulation.run();
+      this.frameCount += 1;
+      if (this.frameCount >= this.framesPerGeneration) {
+        this.frameCount = 0;
+        this.simulation.run();
+      }
+
       this.render();
       this.renderer.render(this.scene, this.camera);
 

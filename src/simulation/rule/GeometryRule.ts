@@ -1,4 +1,5 @@
 import type { Grid } from "../Grid";
+import { wrapCoordinate } from "../WrapCoordinate";
 import type { Rule } from "./Rule";
 
 /** Number of neighbors surrounding a cell in the 8-direction Moore neighbourhood. */
@@ -22,7 +23,10 @@ const NEIGHBOR_OFFSETS: ReadonlyArray<readonly [number, number]> = [
  * {@link NEIGHBOR_OFFSETS}: top-left, top, top-right, left, right,
  * bottom-left, bottom, bottom-right.
  * `true` means the neighbour must contain this player's cell;
- * `false` means it must not. Out-of-bounds positions are treated as `false`.
+ * `false` means it must not.
+ *
+ * The grid is toroidal: neighbour coordinates that run past an edge wrap
+ * around to the opposite edge, both horizontally and vertically.
  */
 export class GeometryRule implements Rule {
   private readonly pattern: ReadonlyArray<boolean>;
@@ -43,20 +47,21 @@ export class GeometryRule implements Rule {
 
   /**
    * Returns true when all 8 neighbours match the pattern for the given
-   * player at position (x, y).
+   * player at position (x, y). Neighbour coordinates wrap around the grid
+   * edges, so edge and corner cells have a full 8-neighbour neighbourhood.
    */
   matches(grid: Grid, x: number, y: number, playerId: number): boolean {
     const height = grid.length;
     const width = height > 0 ? grid[0].length : 0;
 
+    if (width === 0 || height === 0) return !this.pattern.includes(true);
+
     for (let i = 0; i < NEIGHBOR_COUNT; i += 1) {
       const [xOffset, yOffset] = NEIGHBOR_OFFSETS[i];
-      const nx = x + xOffset;
-      const ny = y + yOffset;
+      const nx = wrapCoordinate(x + xOffset, width);
+      const ny = wrapCoordinate(y + yOffset, height);
 
-      const isPlayer =
-        nx >= 0 && ny >= 0 && nx < width && ny < height &&
-        grid[ny][nx] === playerId;
+      const isPlayer = grid[ny][nx] === playerId;
 
       if (isPlayer !== this.pattern[i]) {
         return false;

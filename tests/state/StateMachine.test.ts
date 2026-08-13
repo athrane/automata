@@ -54,6 +54,17 @@ describe('StateMachine', () => {
       expect(machine.currentState).toBe('game-over');
     });
 
+    it('transitions from game to title-screen when the player exits', () => {
+      // Arrange
+      const machine = StateMachine.create('game');
+
+      // Act
+      machine.transition('title-screen');
+
+      // Assert
+      expect(machine.currentState).toBe('title-screen');
+    });
+
     it('transitions from game-over to title-screen', () => {
       // Arrange
       const machine = StateMachine.create('game-over');

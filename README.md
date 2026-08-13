@@ -63,6 +63,19 @@ npm run preview
 
 `vite build` outputs to `dist/`. `vite preview` serves that output at `http://localhost:4173`.
 
+### In-game controls
+
+While a game is running, two overlays sit on top of the simulation canvas:
+
+- **Scoreboard** (top centre) — one row per participant showing a colour swatch and that
+  participant's current number of living cells: the human player plus three computer
+  players, each of which draws its own rules at random when the game starts.
+- **Control bar** (bottom centre) — "Slow down" and "Speed up" step through five speed
+  levels and the readout shows the current one. Level 5 advances one generation per
+  animation frame, the fastest rate the renderer supports; each slower level holds a
+  generation for twice as many frames. "Exit" abandons the game and returns to the title
+  screen without recording a hi-score.
+
 ### `GuiOptions` API
 
 Create renderer options with the static factory method:
@@ -83,9 +96,10 @@ Throws `RangeError` if `width` or `height` is not positive.
 | Method | Description |
 |--------|-------------|
 | `SimulationRenderer.create(simulation, options)` | Create and initialise the renderer |
-| `.start()` | Begin the `requestAnimationFrame` animation loop |
+| `.start(onGameOver?)` | Begin the `requestAnimationFrame` animation loop. The optional callback receives the final generation number when the grid dies out |
 | `.stop()` | Cancel the animation loop |
 | `.render()` | Manually synchronise the scene to the current grid state |
+| `.setFramesPerGeneration(frames)` | Hold each generation for `frames` animation frames. `1` is the fastest rate; throws `RangeError` below 1 |
 
 ### Example
 

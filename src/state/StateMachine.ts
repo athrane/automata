@@ -4,7 +4,7 @@ import type { GameState } from './GameState';
 const VALID_TRANSITIONS: Readonly<Record<GameState, ReadonlyArray<GameState>>> = {
   'title-screen': ['game-configuration'],
   'game-configuration': ['game'],
-  'game': ['game-over'],
+  'game': ['game-over', 'title-screen'],
   'game-over': ['title-screen'],
 };
 
