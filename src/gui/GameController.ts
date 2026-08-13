@@ -1,6 +1,6 @@
 import { StateMachine } from '../state';
 import { GameConfigurationScreen, GameOverScreen, GamePlayingScreen, TitleScreen } from './screens';
-import { HUMAN_PARTICIPANT } from './GameParticipants';
+import { HUMAN_PLAYER_NAME } from './GameParticipants';
 import { HiScore } from './HiScore';
 import type { HiScoreEntry } from './HiScoreEntry';
 import type { RulePreset } from './RulePreset';
@@ -104,7 +104,7 @@ export class GameController {
   private handleGameOver(generation: number): void {
     this.stateMachine.transition('game-over');
 
-    const entry: HiScoreEntry = { name: HUMAN_PARTICIPANT.name, score: generation };
+    const entry: HiScoreEntry = { name: HUMAN_PLAYER_NAME, score: generation };
     this.hiScore.addEntry(entry);
 
     this.gameOverScreen.show();

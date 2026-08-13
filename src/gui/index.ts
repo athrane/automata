@@ -4,7 +4,7 @@ export { GuiOptions } from "./GuiOptions";
 export { HiScore } from "./HiScore";
 export { selectRandomPresetIndices } from "./RandomRulePresetSelection";
 export type { GameParticipant } from "./GameParticipant";
-export { GAME_PARTICIPANTS, HUMAN_PARTICIPANT } from "./GameParticipants";
+export { createGameParticipants, HUMAN_PLAYER_ID, HUMAN_PLAYER_NAME } from "./GameParticipants";
 export type { HiScoreEntry } from "./HiScoreEntry";
 export type { RulePreset } from "./RulePreset";
 export { SimulationRenderer } from "./SimulationRenderer";

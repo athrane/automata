@@ -1,18 +1,11 @@
 import { Simulation, SimulationOptions } from '../../simulation';
-import type { Player } from '../../simulation/player/Player';
-import { AVAILABLE_RULE_PRESETS } from '../AvailableRulePresets';
-import type { GameParticipant } from '../GameParticipant';
-import { GAME_PARTICIPANTS, HUMAN_PARTICIPANT } from '../GameParticipants';
+import { createGameParticipants } from '../GameParticipants';
 import { GuiOptions } from '../GuiOptions';
-import { selectRandomPresetIndices } from '../RandomRulePresetSelection';
 import type { RulePreset } from '../RulePreset';
 import { SimulationRenderer } from '../SimulationRenderer';
 import { SimulationSpeed } from '../SimulationSpeed';
 import { ScoreBoardOverlay } from './ScoreBoardOverlay';
 import { SpeedControlOverlay } from './SpeedControlOverlay';
-
-/** Number of rule presets drawn at random for each computer player. */
-const RULES_PER_COMPUTER_PLAYER = 3;
 
 /** Canvas width in pixels. */
 const CANVAS_WIDTH = 800;
@@ -97,9 +90,8 @@ export class GamePlayingScreen {
    * @param selectedPresets - Rule presets chosen by the player on the configuration screen.
    */
   public show(selectedPresets: RulePreset[]): void {
-    const players = GAME_PARTICIPANTS.map((participant) =>
-      this.createPlayer(participant, selectedPresets),
-    );
+    const participants = createGameParticipants(selectedPresets);
+    const players = participants.map((participant) => participant.player);
 
     const simulationOptions = SimulationOptions.create(GRID_WIDTH, GRID_HEIGHT, players);
     const simulation = Simulation.create(simulationOptions);
@@ -111,7 +103,7 @@ export class GamePlayingScreen {
       CANVAS_WIDTH,
       CANVAS_HEIGHT,
       this.container,
-      new Map(GAME_PARTICIPANTS.map((participant) => [participant.id, participant.color])),
+      new Map(participants.map((participant) => [participant.player.id, participant.color])),
     );
 
     this.speed = SimulationSpeed.create();
@@ -119,7 +111,7 @@ export class GamePlayingScreen {
     this.renderer.setFramesPerGeneration(this.speed.getFramesPerGeneration());
     this.renderer.start((generation) => { this.handleGameOver(generation); });
 
-    this.scoreBoard.show(GAME_PARTICIPANTS);
+    this.scoreBoard.show(participants);
     this.speedControl.show(this.speed);
     this.scoreTimerId = setInterval(() => {
       this.scoreBoard.update(simulation.getCellCounts());
@@ -156,32 +148,6 @@ export class GamePlayingScreen {
 
     this.speedControl.hide();
     this.scoreBoard.hide();
-  }
-
-  /**
-   * Builds the simulation player for a participant. The human player uses the
-   * presets chosen on the configuration screen; every computer player draws its
-   * own presets at random.
-   *
-   * @param participant - The participant to build a player for.
-   * @param selectedPresets - Rule presets chosen by the human player.
-   * @returns The player passed to the simulation.
-   */
-  private createPlayer(
-    participant: GameParticipant,
-    selectedPresets: RulePreset[],
-  ): Player {
-    if (participant.id === HUMAN_PARTICIPANT.id) {
-      return { id: participant.id, rules: selectedPresets.map((preset) => preset.rule) };
-    }
-
-    const indices = selectRandomPresetIndices(
-      AVAILABLE_RULE_PRESETS.length,
-      RULES_PER_COMPUTER_PLAYER,
-      Math.random,
-    );
-
-    return { id: participant.id, rules: indices.map((index) => AVAILABLE_RULE_PRESETS[index].rule) };
   }
 
   /** Steps the simulation one speed level slower and refreshes the control bar. */

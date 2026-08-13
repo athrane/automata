@@ -92,14 +92,14 @@ export class ScoreBoardOverlay {
     row.appendChild(swatch);
 
     const name = document.createElement('span');
-    name.textContent = participant.name;
+    name.textContent = participant.player.name;
     row.appendChild(name);
 
     const score = document.createElement('span');
     score.textContent = String(UNKNOWN_SCORE);
     row.appendChild(score);
 
-    this.scoreLabels.set(participant.id, score);
+    this.scoreLabels.set(participant.player.id, score);
 
     return row;
   }

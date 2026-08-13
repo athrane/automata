@@ -25,7 +25,7 @@ describe("Simulation", () => {
 
   it("calculates the next generation when run is called", () => {
     const simulation = Simulation.create(
-      SimulationOptions.create(3, 3, [{ id: 1, rules: [new SumRule([2])] }]),
+      SimulationOptions.create(3, 3, [{ id: 1, name: "Player 1", rules: [new SumRule([2])] }]),
     );
 
     simulation.setCell(0, 0, 1);
@@ -44,7 +44,7 @@ describe("Simulation", () => {
     // never populate any cell, starving the grid within a generation.
     const simulation = Simulation.create(
       SimulationOptions.create(3, 3, [
-        { id: 1, rules: [new SumRule([1]), new SumRule([4])] },
+        { id: 1, name: "Player 1", rules: [new SumRule([1]), new SumRule([4])] },
       ]),
     );
 
@@ -58,8 +58,8 @@ describe("Simulation", () => {
   it("supports multiple players with different rulesets", () => {
     const simulation = Simulation.create(
       SimulationOptions.create(3, 3, [
-        { id: 1, rules: [new SumRule([1])] },
-        { id: 2, rules: [new SumRule([1])] },
+        { id: 1, name: "Player 1", rules: [new SumRule([1])] },
+        { id: 2, name: "Player 2", rules: [new SumRule([1])] },
       ]),
     );
 
@@ -75,8 +75,8 @@ describe("Simulation", () => {
     it("reports zero for every registered player on an empty grid", () => {
       const simulation = Simulation.create(
         SimulationOptions.create(3, 3, [
-          { id: 1, rules: [] },
-          { id: 2, rules: [] },
+          { id: 1, name: "Player 1", rules: [] },
+          { id: 2, name: "Player 2", rules: [] },
         ]),
       );
 
@@ -89,8 +89,8 @@ describe("Simulation", () => {
     it("counts cells against their owning player", () => {
       const simulation = Simulation.create(
         SimulationOptions.create(3, 3, [
-          { id: 1, rules: [] },
-          { id: 2, rules: [] },
+          { id: 1, name: "Player 1", rules: [] },
+          { id: 2, name: "Player 2", rules: [] },
         ]),
       );
 
@@ -107,8 +107,8 @@ describe("Simulation", () => {
     it("keeps a player with no cells in the result", () => {
       const simulation = Simulation.create(
         SimulationOptions.create(3, 3, [
-          { id: 1, rules: [] },
-          { id: 2, rules: [] },
+          { id: 1, name: "Player 1", rules: [] },
+          { id: 2, name: "Player 2", rules: [] },
         ]),
       );
 
@@ -125,8 +125,8 @@ describe("Simulation", () => {
     it("leaves cells owned by an earlier player untouched", () => {
       const simulation = Simulation.create(
         SimulationOptions.create(3, 3, [
-          { id: 1, rules: [] },
-          { id: 2, rules: [] },
+          { id: 1, name: "Player 1", rules: [] },
+          { id: 2, name: "Player 2", rules: [] },
         ]),
       );
 

@@ -25,7 +25,7 @@ describe("Simulation", () => {
 
   it("calculates the next generation when run is called", () => {
     const simulation = Simulation.create(
-      SimulationOptions.create(3, 3, [{ id: 1, rules: [new SumRule([2])] }]),
+      SimulationOptions.create(3, 3, [{ id: 1, name: "Player 1", rules: [new SumRule([2])] }]),
     );
 
     simulation.setCell(0, 0, 1);
@@ -41,8 +41,8 @@ describe("Simulation", () => {
   it("supports multiple players with different rulesets", () => {
     const simulation = Simulation.create(
       SimulationOptions.create(3, 3, [
-        { id: 1, rules: [new SumRule([1])] },
-        { id: 2, rules: [new SumRule([1])] },
+        { id: 1, name: "Player 1", rules: [new SumRule([1])] },
+        { id: 2, name: "Player 2", rules: [new SumRule([1])] },
       ]),
     );
 
