@@ -74,7 +74,23 @@ While a game is running, two overlays sit on top of the simulation canvas:
   levels and the readout shows the current one. Level 5 advances one generation per
   animation frame, the fastest rate the renderer supports; each slower level holds a
   generation for twice as many frames. "Exit" abandons the game and returns to the title
-  screen without recording a hi-score.
+  screen without asking the simulation to record a score.
+
+### Hi-score
+
+The hi-score list is owned by the simulation, not by the GUI. A score is the number of
+generations the grid survived, so it is read straight from the simulation's generation
+counter when a game ends. The list keeps the ten highest scores in descending order, and
+the title screen renders whatever the simulation reports each time it is shown.
+
+| Method | Description |
+|--------|-------------|
+| `simulation.recordHiScore(name)` | Record an entry for `name` scored at the current generation |
+| `simulation.getHiScores()` | Read the current entries, highest score first |
+
+Each game builds a new `Simulation`, so by default every simulation records into one
+shared list that outlives them. Pass a `HiScore` as the fourth argument to
+`SimulationOptions.create` to record into an isolated list instead.
 
 ### `GuiOptions` API
 

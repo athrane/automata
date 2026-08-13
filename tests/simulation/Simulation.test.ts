@@ -1,4 +1,4 @@
-import { Simulation, SimulationOptions } from "../../src/simulation";
+import { HiScore, Simulation, SimulationOptions } from "../../src/simulation";
 import { SumRule } from "../../src/simulation/rule";
 
 describe("Simulation", () => {
@@ -143,6 +143,57 @@ describe("Simulation", () => {
       const simulation = Simulation.create(SimulationOptions.create(3, 3));
 
       expect(() => { simulation.seedRandom(1.5, 1); }).toThrow(RangeError);
+    });
+  });
+
+  describe("recordHiScore", () => {
+    it("records the current generation as the score", () => {
+      const hiScore = HiScore.create();
+      const simulation = Simulation.create(SimulationOptions.create(3, 3, [], hiScore));
+
+      simulation.run();
+      simulation.run();
+      simulation.recordHiScore("Player 1");
+
+      expect(hiScore.getEntries()[0]?.score).toBe(2);
+    });
+
+    it("records the given player name", () => {
+      const hiScore = HiScore.create();
+      const simulation = Simulation.create(SimulationOptions.create(3, 3, [], hiScore));
+
+      simulation.recordHiScore("Player 1");
+
+      expect(hiScore.getEntries()[0]?.name).toBe("Player 1");
+    });
+
+    it("records into the shared list when no hi-score list is supplied", () => {
+      HiScore.resetShared();
+      const simulation = Simulation.create(SimulationOptions.create(3, 3));
+
+      simulation.run();
+      simulation.recordHiScore("Player 1");
+
+      expect(HiScore.shared().getEntries()).toEqual([{ name: "Player 1", score: 1 }]);
+    });
+  });
+
+  describe("getHiScores", () => {
+    it("returns the entries of the supplied hi-score list", () => {
+      const hiScore = HiScore.create();
+      const simulation = Simulation.create(SimulationOptions.create(3, 3, [], hiScore));
+
+      hiScore.addEntry({ name: "Alice", score: 42 });
+
+      expect(simulation.getHiScores()).toEqual([{ name: "Alice", score: 42 }]);
+    });
+
+    it("returns an empty list before any game has been recorded", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, [], HiScore.create()),
+      );
+
+      expect(simulation.getHiScores()).toHaveLength(0);
     });
   });
 });

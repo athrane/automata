@@ -1,7 +1,10 @@
-import type { HiScoreEntry } from './HiScoreEntry';
+import type { HiScoreEntry } from "./HiScoreEntry";
 
 /** Maximum number of entries retained in the hi-score list. */
 const MAX_ENTRIES = 10;
+
+/** The process-wide hi-score list, created on first use. */
+let sharedHiScore: HiScore | null = null;
 
 /**
  * Maintains an in-memory, sorted hi-score list capped at {@link MAX_ENTRIES}.
@@ -22,6 +25,31 @@ export class HiScore {
    */
   public static create(): HiScore {
     return new HiScore();
+  }
+
+  /**
+   * Returns the process-wide hi-score list, creating it on first use.
+   *
+   * A {@link HiScore} owned by a single simulation would be discarded together
+   * with that simulation, so scores from earlier games would be lost. This
+   * shared list outlives any individual simulation and is the default every
+   * simulation records into.
+   *
+   * @returns The single shared HiScore instance.
+   */
+  public static shared(): HiScore {
+    sharedHiScore ??= new HiScore();
+
+    return sharedHiScore;
+  }
+
+  /**
+   * Discards the shared hi-score list, so the next call to {@link HiScore.shared}
+   * creates an empty one. Intended for tests that must not observe entries
+   * recorded by other tests.
+   */
+  public static resetShared(): void {
+    sharedHiScore = null;
   }
 
   /**

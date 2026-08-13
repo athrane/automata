@@ -1,5 +1,7 @@
 import type { Cell } from "./Cell";
 import type { Grid } from "./Grid";
+import type { HiScore } from "./hiscore/HiScore";
+import type { HiScoreEntry } from "./hiscore/HiScoreEntry";
 import type { Player } from "./player/Player";
 import { SimulationOptions } from "./SimulationOptions";
 
@@ -24,6 +26,9 @@ export class Simulation {
   /** The simulation grid. */
   private grid: Grid;
 
+  /** Hi-score list this simulation records completed games into. */
+  private readonly hiScore: HiScore;
+
   /**
    * @param options - Configuration for grid dimensions and players.
    */
@@ -31,6 +36,7 @@ export class Simulation {
     this.width = options.width;
     this.height = options.height;
     this.players = options.players;
+    this.hiScore = options.hiScore;
     this.generation = 0;
     this.grid = Array.from({ length: this.height }, () =>
       Array.from({ length: this.width }, () => null as Cell),
@@ -128,6 +134,29 @@ export class Simulation {
     }
 
     return counts;
+  }
+
+  /**
+   * Records a hi-score entry for a completed game.
+   *
+   * The score is the current generation count, so a player's score is the
+   * number of generations the grid survived.
+   *
+   * @param name - Display name recorded with the entry.
+   */
+  public recordHiScore(name: string): void {
+    this.hiScore.addEntry({ name, score: this.generation });
+  }
+
+  /**
+   * Returns the current hi-score list in descending score order.
+   *
+   * Each score is the generation count a completed game reached.
+   *
+   * @returns A readonly snapshot of the hi-score entries.
+   */
+  public getHiScores(): ReadonlyArray<HiScoreEntry> {
+    return this.hiScore.getEntries();
   }
 
   /**

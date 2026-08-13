@@ -1,5 +1,6 @@
-import { Simulation, SimulationOptions } from '../../simulation';
-import { createGameParticipants } from '../GameParticipants';
+import { HiScore, Simulation, SimulationOptions } from '../../simulation';
+import type { HiScoreEntry } from '../../simulation';
+import { createGameParticipants, HUMAN_PLAYER_NAME } from '../GameParticipants';
 import { GuiOptions } from '../GuiOptions';
 import type { RulePreset } from '../RulePreset';
 import { SimulationRenderer } from '../SimulationRenderer';
@@ -38,22 +39,24 @@ const SCORE_REFRESH_INTERVAL_MS = 200;
  */
 export class GamePlayingScreen {
   private readonly container: HTMLElement;
-  private readonly onGameOver: (generation: number) => void;
+  private readonly onGameOver: () => void;
   private readonly onExit: () => void;
   private readonly scoreBoard: ScoreBoardOverlay;
   private readonly speedControl: SpeedControlOverlay;
+  private simulation: Simulation | null;
   private renderer: SimulationRenderer | null;
   private speed: SimulationSpeed;
   private scoreTimerId: ReturnType<typeof setInterval> | null;
 
   private constructor(
     container: HTMLElement,
-    onGameOver: (generation: number) => void,
+    onGameOver: () => void,
     onExit: () => void,
   ) {
     this.container = container;
     this.onGameOver = onGameOver;
     this.onExit = onExit;
+    this.simulation = null;
     this.scoreBoard = ScoreBoardOverlay.create(container);
     this.speedControl = SpeedControlOverlay.create(
       container,
@@ -70,13 +73,13 @@ export class GamePlayingScreen {
    * Creates a {@link GamePlayingScreen} instance.
    *
    * @param container - DOM element that hosts the simulation canvas and overlays.
-   * @param onGameOver - Callback invoked with the final generation count when all cells die.
+   * @param onGameOver - Callback invoked when all cells die and the score has been recorded.
    * @param onExit - Callback invoked when the player leaves the game via the "Exit" button.
    * @returns A new GamePlayingScreen instance.
    */
   public static create(
     container: HTMLElement,
-    onGameOver: (generation: number) => void,
+    onGameOver: () => void,
     onExit: () => void,
   ): GamePlayingScreen {
     return new GamePlayingScreen(container, onGameOver, onExit);
@@ -95,6 +98,7 @@ export class GamePlayingScreen {
 
     const simulationOptions = SimulationOptions.create(GRID_WIDTH, GRID_HEIGHT, players);
     const simulation = Simulation.create(simulationOptions);
+    this.simulation = simulation;
     for (const player of players) {
       simulation.seedRandom(PLAYER_SEED_DENSITY, player.id);
     }
@@ -109,7 +113,7 @@ export class GamePlayingScreen {
     this.speed = SimulationSpeed.create();
     this.renderer = SimulationRenderer.create(simulation, guiOptions);
     this.renderer.setFramesPerGeneration(this.speed.getFramesPerGeneration());
-    this.renderer.start((generation) => { this.handleGameOver(generation); });
+    this.renderer.start(() => { this.handleGameOver(); });
 
     this.scoreBoard.show(participants);
     this.speedControl.show(this.speed);
@@ -126,17 +130,31 @@ export class GamePlayingScreen {
       this.renderer.destroy();
       this.renderer = null;
     }
+
+    this.simulation = null;
   }
 
   /**
-   * Removes the in-game overlays once the game ends, leaving the final grid on
-   * screen behind the game-over overlay, then forwards to the game-over callback.
+   * Returns the current hi-score list as reported by the simulation.
    *
-   * @param generation - The generation the game ended on.
+   * Falls back to the shared list before the first game, when no simulation
+   * has been built yet.
+   *
+   * @returns A readonly snapshot of the hi-score entries.
    */
-  private handleGameOver(generation: number): void {
+  public getHiScores(): ReadonlyArray<HiScoreEntry> {
+    return this.simulation?.getHiScores() ?? HiScore.shared().getEntries();
+  }
+
+  /**
+   * Records the human player's score, removes the in-game overlays once the
+   * game ends, leaving the final grid on screen behind the game-over overlay,
+   * then forwards to the game-over callback.
+   */
+  private handleGameOver(): void {
+    this.simulation?.recordHiScore(HUMAN_PLAYER_NAME);
     this.removeOverlays();
-    this.onGameOver(generation);
+    this.onGameOver();
   }
 
   /** Stops the scoreboard refresh and removes both in-game overlays. */

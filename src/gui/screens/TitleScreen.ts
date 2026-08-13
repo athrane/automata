@@ -1,4 +1,4 @@
-import type { HiScore } from '../HiScore';
+import type { HiScoreEntry } from '../../simulation';
 
 /** Display title shown at the top of the title screen. */
 const GAME_TITLE = 'Automata';
@@ -11,17 +11,17 @@ const GAME_TITLE = 'Automata';
  */
 export class TitleScreen {
   private readonly container: HTMLElement;
-  private readonly hiScore: HiScore;
+  private readonly hiScoreProvider: () => ReadonlyArray<HiScoreEntry>;
   private readonly onPlayGame: () => void;
   private element: HTMLElement | null;
 
   private constructor(
     container: HTMLElement,
-    hiScore: HiScore,
+    hiScoreProvider: () => ReadonlyArray<HiScoreEntry>,
     onPlayGame: () => void,
   ) {
     this.container = container;
-    this.hiScore = hiScore;
+    this.hiScoreProvider = hiScoreProvider;
     this.onPlayGame = onPlayGame;
     this.element = null;
   }
@@ -30,16 +30,16 @@ export class TitleScreen {
    * Creates a {@link TitleScreen} instance.
    *
    * @param container - DOM element that receives the screen overlay.
-   * @param hiScore - The shared hi-score list to display.
+   * @param hiScoreProvider - Returns the hi-score list to display, read on every {@link show}.
    * @param onPlayGame - Callback invoked when the "Play game" button is clicked.
    * @returns A new TitleScreen instance.
    */
   public static create(
     container: HTMLElement,
-    hiScore: HiScore,
+    hiScoreProvider: () => ReadonlyArray<HiScoreEntry>,
     onPlayGame: () => void,
   ): TitleScreen {
-    return new TitleScreen(container, hiScore, onPlayGame);
+    return new TitleScreen(container, hiScoreProvider, onPlayGame);
   }
 
   /** Builds and appends the title-screen overlay to the container. */
@@ -62,7 +62,7 @@ export class TitleScreen {
 
     const list = document.createElement('ol');
     list.style.cssText = 'list-style:decimal inside;margin:0 0 2rem;min-height:1.5rem;padding:0;';
-    for (const entry of this.hiScore.getEntries()) {
+    for (const entry of this.hiScoreProvider()) {
       const item = document.createElement('li');
       item.textContent = `${entry.name} — ${entry.score}`;
       list.appendChild(item);

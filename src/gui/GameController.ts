@@ -1,8 +1,5 @@
 import { StateMachine } from '../state';
 import { GameConfigurationScreen, GameOverScreen, GamePlayingScreen, TitleScreen } from './screens';
-import { HUMAN_PLAYER_NAME } from './GameParticipants';
-import { HiScore } from './HiScore';
-import type { HiScoreEntry } from './HiScoreEntry';
 import type { RulePreset } from './RulePreset';
 
 /**
@@ -20,7 +17,6 @@ import type { RulePreset } from './RulePreset';
 export class GameController {
   private readonly container: HTMLElement;
   private readonly stateMachine: StateMachine;
-  private readonly hiScore: HiScore;
   private readonly titleScreen: TitleScreen;
   private readonly configScreen: GameConfigurationScreen;
   private readonly gamePlayingScreen: GamePlayingScreen;
@@ -29,23 +25,22 @@ export class GameController {
   private constructor(container: HTMLElement) {
     this.container = container;
     this.stateMachine = StateMachine.create('title-screen');
-    this.hiScore = HiScore.create();
+
+    this.gamePlayingScreen = GamePlayingScreen.create(
+      container,
+      () => { this.handleGameOver(); },
+      () => { this.handleExitGame(); },
+    );
 
     this.titleScreen = TitleScreen.create(
       container,
-      this.hiScore,
+      () => this.gamePlayingScreen.getHiScores(),
       () => { this.handlePlayGame(); },
     );
 
     this.configScreen = GameConfigurationScreen.create(
       container,
       (selected) => { this.handleStartGame(selected); },
-    );
-
-    this.gamePlayingScreen = GamePlayingScreen.create(
-      container,
-      (generation) => { this.handleGameOver(generation); },
-      () => { this.handleExitGame(); },
     );
 
     this.gameOverScreen = GameOverScreen.create(
@@ -101,12 +96,8 @@ export class GameController {
     this.titleScreen.show();
   }
 
-  private handleGameOver(generation: number): void {
+  private handleGameOver(): void {
     this.stateMachine.transition('game-over');
-
-    const entry: HiScoreEntry = { name: HUMAN_PLAYER_NAME, score: generation };
-    this.hiScore.addEntry(entry);
-
     this.gameOverScreen.show();
   }
 }

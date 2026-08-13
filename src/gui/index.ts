@@ -1,11 +1,9 @@
 export { AVAILABLE_RULE_PRESETS } from "./AvailableRulePresets";
 export { GameController } from "./GameController";
 export { GuiOptions } from "./GuiOptions";
-export { HiScore } from "./HiScore";
 export { selectRandomPresetIndices } from "./RandomRulePresetSelection";
 export type { GameParticipant } from "./GameParticipant";
 export { createGameParticipants, HUMAN_PLAYER_ID, HUMAN_PLAYER_NAME } from "./GameParticipants";
-export type { HiScoreEntry } from "./HiScoreEntry";
 export type { RulePreset } from "./RulePreset";
 export { SimulationRenderer } from "./SimulationRenderer";
 export { SimulationSpeed } from "./SimulationSpeed";

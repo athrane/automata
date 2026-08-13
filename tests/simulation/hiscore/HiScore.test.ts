@@ -1,5 +1,5 @@
-import { HiScore } from '../../src/gui/HiScore';
-import type { HiScoreEntry } from '../../src/gui/HiScoreEntry';
+import { HiScore } from '../../../src/simulation/hiscore/HiScore';
+import type { HiScoreEntry } from '../../../src/simulation/hiscore/HiScoreEntry';
 
 describe('HiScore', () => {
   describe('create', () => {
@@ -70,6 +70,50 @@ describe('HiScore', () => {
       const scores = hiScore.getEntries().map((e) => e.score);
       expect(scores).not.toContain(1);
       expect(scores).toContain(100);
+    });
+  });
+
+  describe('shared', () => {
+    it('returns the same instance on repeated calls', () => {
+      // Arrange
+      HiScore.resetShared();
+
+      // Act
+      const first = HiScore.shared();
+      const second = HiScore.shared();
+
+      // Assert
+      expect(second).toBe(first);
+    });
+
+    it('retains entries recorded through an earlier reference', () => {
+      // Arrange
+      HiScore.resetShared();
+      HiScore.shared().addEntry({ name: 'Alice', score: 7 });
+
+      // Act
+      const entries = HiScore.shared().getEntries();
+
+      // Assert
+      expect(entries).toHaveLength(1);
+      expect(entries[0]?.score).toBe(7);
+    });
+  });
+
+  describe('resetShared', () => {
+    it('replaces the shared list with an empty one', () => {
+      // Arrange
+      HiScore.resetShared();
+      const before = HiScore.shared();
+      before.addEntry({ name: 'Alice', score: 7 });
+
+      // Act
+      HiScore.resetShared();
+
+      // Assert
+      const after = HiScore.shared();
+      expect(after).not.toBe(before);
+      expect(after.getEntries()).toHaveLength(0);
     });
   });
 
