@@ -5,8 +5,8 @@
  */
 const SPEED_LEVELS: ReadonlyArray<number> = [16, 8, 4, 2, 1];
 
-/** Index of the level a new instance starts at — the fastest level. */
-const DEFAULT_LEVEL_INDEX = SPEED_LEVELS.length - 1;
+/** Index of the level a new instance starts at — the slowest level. */
+const DEFAULT_LEVEL_INDEX = 0;
 
 /**
  * Models the discrete simulation speed levels available during gameplay.
@@ -25,7 +25,7 @@ export class SimulationSpeed {
   }
 
   /**
-   * Creates a {@link SimulationSpeed} at the fastest level.
+   * Creates a {@link SimulationSpeed} at the slowest level.
    *
    * @returns A new SimulationSpeed instance.
    */
