@@ -1,3 +1,5 @@
+import { ContestedCellVoidStrategy } from "../../../src/simulation/claim/ContestedCellVoidStrategy";
+import { FirstMatchClaimStrategy } from "../../../src/simulation/claim/FirstMatchClaimStrategy";
 import { HiScore } from "../../../src/simulation/hiscore/HiScore";
 import { CheckerStartingPattern } from "../../../src/simulation/level/CheckerStartingPattern";
 import { Level } from "../../../src/simulation/level/Level";
@@ -25,6 +27,61 @@ describe("Level", () => {
     expect(level.height).toBe(6);
     expect(level.roster).toBe(roster);
     expect(level.startingPattern).toBe(pattern);
+  });
+
+  describe("claimStrategy", () => {
+    it("defaults to first match in roster order", () => {
+      const level = Level.create(
+        1,
+        "Level 1",
+        4,
+        4,
+        createRoster(),
+        CheckerStartingPattern.create(2, [1, 2]),
+      );
+
+      expect(level.claimStrategy).toBeInstanceOf(FirstMatchClaimStrategy);
+    });
+
+    it("exposes the strategy it was created with", () => {
+      const strategy = ContestedCellVoidStrategy.create(FirstMatchClaimStrategy.create());
+      const level = Level.create(
+        1,
+        "Level 1",
+        4,
+        4,
+        createRoster(),
+        CheckerStartingPattern.create(2, [1, 2]),
+        strategy,
+      );
+
+      expect(level.claimStrategy).toBe(strategy);
+    });
+
+    it("resolves the simulation's cells through the level's strategy", () => {
+      // Both players match any cell with exactly one of their own neighbours.
+      // On a 3x3 toroidal grid each seed neighbours every other cell, so the
+      // centre is contested by both players and the strategy voids it.
+      const roster: LevelRoster = {
+        human: { id: 1, name: "Player 1" },
+        computers: [{ id: 2, name: "Computer 1", rules: [new SumRule([1])] }],
+      };
+      const level = Level.create(
+        1,
+        "Level 1",
+        3,
+        3,
+        roster,
+        CheckerStartingPattern.create(3, [null]),
+        ContestedCellVoidStrategy.create(FirstMatchClaimStrategy.create()),
+      );
+
+      const simulation = level.createSimulation([new SumRule([1])], HiScore.create());
+      simulation.setCell(0, 0, 1);
+      simulation.setCell(2, 2, 2);
+
+      expect(simulation.run()[1][1]).toBeNull();
+    });
   });
 
   describe("create", () => {

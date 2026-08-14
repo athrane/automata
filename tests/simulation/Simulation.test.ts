@@ -1,5 +1,50 @@
-import { CheckerStartingPattern, HiScore, Simulation, SimulationOptions } from "../../src/simulation";
+import {
+  CheckerStartingPattern,
+  ContestedCellVoidStrategy,
+  FirstMatchClaimStrategy,
+  HiScore,
+  Simulation,
+  SimulationOptions,
+} from "../../src/simulation";
+import type { Cell } from "../../src/simulation/Cell";
+import type { ClaimCandidate } from "../../src/simulation/claim/ClaimCandidate";
+import type { ClaimContext } from "../../src/simulation/claim/ClaimContext";
+import type { ClaimStrategy } from "../../src/simulation/claim/ClaimStrategy";
 import { SumRule } from "../../src/simulation/rule";
+
+/** A strategy that records its arguments and returns a fixed winner. */
+interface RecordingStrategy extends ClaimStrategy {
+  candidateIds: number[][];
+  generations: number[];
+}
+
+/** Builds a strategy that always returns the given winner and records every call. */
+function createRecordingStrategy(winner: Cell): RecordingStrategy {
+  const candidateIds: number[][] = [];
+  const generations: number[] = [];
+
+  return {
+    candidateIds,
+    generations,
+    needsAllCandidates: true,
+    selectWinner(candidates: ReadonlyArray<ClaimCandidate>, context: ClaimContext): Cell {
+      candidateIds.push(candidates.map((candidate) => candidate.player.id));
+      generations.push(context.generation);
+      return winner;
+    },
+  };
+}
+
+/**
+ * Two players whose single rule matches any cell with exactly one of their
+ * own cells among its neighbours.
+ */
+function createContestingPlayers() {
+  return [
+    { id: 1, name: "Player 1", rules: [new SumRule([1])] },
+    { id: 2, name: "Player 2", rules: [new SumRule([1])] },
+  ];
+}
 
 describe("Simulation", () => {
   it("starts at generation 0 with default 100x100 grid", () => {
@@ -69,6 +114,122 @@ describe("Simulation", () => {
     const nextGrid = simulation.run();
 
     expect(nextGrid[1][1]).toBe(1);
+  });
+
+  describe("claim strategy", () => {
+    it("awards contested cells to the first player in the roster by default", () => {
+      // On a 3x3 toroidal grid every other cell is a neighbour, so both
+      // players match every cell except the one holding their own seed.
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, createContestingPlayers()),
+      );
+
+      simulation.setCell(0, 0, 1);
+      simulation.setCell(2, 2, 2);
+
+      const nextGrid = simulation.run();
+
+      expect(nextGrid[1][1]).toBe(1);
+      expect(nextGrid[0][0]).toBe(2);
+      expect(nextGrid[2][2]).toBe(1);
+    });
+
+    it("resolves cells through the strategy supplied in the options", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(
+          3,
+          3,
+          createContestingPlayers(),
+          HiScore.create(),
+          ContestedCellVoidStrategy.create(FirstMatchClaimStrategy.create()),
+        ),
+      );
+
+      simulation.setCell(0, 0, 1);
+      simulation.setCell(2, 2, 2);
+
+      const nextGrid = simulation.run();
+
+      expect(nextGrid[1][1]).toBeNull();
+      expect(nextGrid[0][0]).toBe(2);
+      expect(nextGrid[2][2]).toBe(1);
+    });
+
+    it("offers the strategy every player that matched the cell", () => {
+      const strategy = createRecordingStrategy(2);
+      const simulation = Simulation.create(
+        SimulationOptions.create(
+          3,
+          3,
+          createContestingPlayers(),
+          HiScore.create(),
+          strategy,
+        ),
+      );
+
+      simulation.setCell(0, 0, 1);
+      simulation.setCell(2, 2, 2);
+      simulation.run();
+
+      expect(strategy.candidateIds).toContainEqual([1, 2]);
+    });
+
+    it("writes the strategy's choice into the next grid", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(
+          3,
+          3,
+          createContestingPlayers(),
+          HiScore.create(),
+          createRecordingStrategy(2),
+        ),
+      );
+
+      simulation.setCell(0, 0, 1);
+      simulation.setCell(2, 2, 2);
+
+      const nextGrid = simulation.run();
+
+      expect(nextGrid[1][1]).toBe(2);
+    });
+
+    it("leaves a cell empty when the strategy declines to award it", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(
+          3,
+          3,
+          createContestingPlayers(),
+          HiScore.create(),
+          createRecordingStrategy(null),
+        ),
+      );
+
+      simulation.setCell(0, 0, 1);
+      simulation.setCell(2, 2, 2);
+
+      const nextGrid = simulation.run();
+
+      expect(simulation.hasLivingCells()).toBe(false);
+      expect(nextGrid[1][1]).toBeNull();
+    });
+
+    it("passes the generation being read, not the one being written", () => {
+      const strategy = createRecordingStrategy(1);
+      // A rule accepting every neighbour count keeps the player a candidate
+      // for every cell, so the strategy is consulted in both generations.
+      const players = [
+        { id: 1, name: "Player 1", rules: [new SumRule([0, 1, 2, 3, 4, 5, 6, 7, 8])] },
+      ];
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, players, HiScore.create(), strategy),
+      );
+
+      simulation.run();
+      simulation.run();
+
+      expect(strategy.generations[0]).toBe(0);
+      expect(strategy.generations.at(-1)).toBe(1);
+    });
   });
 
   describe("getCellCounts", () => {
