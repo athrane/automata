@@ -1,4 +1,4 @@
-import { HiScore, Simulation, SimulationOptions } from "../../src/simulation";
+import { CheckerStartingPattern, HiScore, Simulation, SimulationOptions } from "../../src/simulation";
 import { SumRule } from "../../src/simulation/rule";
 
 describe("Simulation", () => {
@@ -118,6 +118,67 @@ describe("Simulation", () => {
 
       expect(counts.size).toBe(2);
       expect(counts.get(2)).toBe(0);
+    });
+  });
+
+  describe("getPlayers", () => {
+    it("returns the players supplied through the options", () => {
+      const players = [
+        { id: 1, name: "Player 1", rules: [] },
+        { id: 2, name: "Player 2", rules: [] },
+      ];
+      const simulation = Simulation.create(SimulationOptions.create(3, 3, players));
+
+      expect(simulation.getPlayers().map((player) => player.id)).toEqual([1, 2]);
+    });
+
+    it("returns an empty list when no players are registered", () => {
+      const simulation = Simulation.create(SimulationOptions.create(3, 3));
+
+      expect(simulation.getPlayers()).toHaveLength(0);
+    });
+  });
+
+  describe("applyStartingPattern", () => {
+    it("writes the pattern into every cell", () => {
+      const simulation = Simulation.create(SimulationOptions.create(4, 4));
+
+      simulation.applyStartingPattern(CheckerStartingPattern.create(2, [1, 2]));
+
+      const grid = simulation.getGrid();
+
+      expect(grid[0][0]).toBe(1);
+      expect(grid[0][2]).toBe(2);
+      expect(grid[2][0]).toBe(2);
+      expect(grid[2][2]).toBe(1);
+    });
+
+    it("overwrites cells that are already occupied", () => {
+      const simulation = Simulation.create(SimulationOptions.create(4, 4));
+
+      simulation.setCell(0, 0, 9);
+      simulation.applyStartingPattern(CheckerStartingPattern.create(2, [1, 2]));
+
+      expect(simulation.getGrid()[0][0]).toBe(1);
+    });
+
+    it("clears cells the pattern leaves empty", () => {
+      const simulation = Simulation.create(SimulationOptions.create(4, 4));
+
+      simulation.setCell(0, 0, 9);
+      simulation.applyStartingPattern(CheckerStartingPattern.create(2, [null]));
+
+      expect(simulation.getGrid()[0][0]).toBeNull();
+    });
+
+    it("resets the generation counter to zero", () => {
+      const simulation = Simulation.create(SimulationOptions.create(4, 4));
+
+      simulation.run();
+      simulation.run();
+      simulation.applyStartingPattern(CheckerStartingPattern.create(2, [1, 2]));
+
+      expect(simulation.generation).toBe(0);
     });
   });
 

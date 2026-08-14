@@ -2,6 +2,7 @@ import type { Cell } from "./Cell";
 import type { Grid } from "./Grid";
 import type { HiScore } from "./hiscore/HiScore";
 import type { HiScoreEntry } from "./hiscore/HiScoreEntry";
+import type { StartingPattern } from "./level/StartingPattern";
 import type { Player } from "./player/Player";
 import { SimulationOptions } from "./SimulationOptions";
 
@@ -56,6 +57,19 @@ export class Simulation {
   /** Returns a shallow copy of the current grid. */
   getGrid(): Grid {
     return this.grid.map((row) => [...row]);
+  }
+
+  /**
+   * Returns the players taking part in this simulation, in evaluation order.
+   *
+   * Callers that need to present the players — a scoreboard, a colour map —
+   * should read them from here rather than rebuilding the roster, so their
+   * view cannot drift from the one the simulation is running.
+   *
+   * @returns A readonly view of the registered players.
+   */
+  public getPlayers(): ReadonlyArray<Player> {
+    return this.players;
   }
 
   /** Sets the value of a single cell. Out-of-bounds coordinates are ignored. */
@@ -157,6 +171,27 @@ export class Simulation {
    */
   public getHiScores(): ReadonlyArray<HiScoreEntry> {
     return this.hiScore.getEntries();
+  }
+
+  /**
+   * Overwrites the whole grid with the given starting pattern and resets the
+   * generation counter to 0.
+   *
+   * Every cell is assigned unconditionally, unlike {@link seedRandom}, which
+   * skips already-occupied cells. A level start must not depend on what the
+   * grid held beforehand, so applying the same pattern twice always yields
+   * the same grid.
+   *
+   * @param pattern - Supplies the owner of each cell at generation 0.
+   */
+  public applyStartingPattern(pattern: StartingPattern): void {
+    for (let y = 0; y < this.height; y += 1) {
+      for (let x = 0; x < this.width; x += 1) {
+        this.grid[y][x] = pattern.cellAt(x, y);
+      }
+    }
+
+    this.generation = 0;
   }
 
   /**

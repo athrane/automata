@@ -68,13 +68,71 @@ npm run preview
 While a game is running, two overlays sit on top of the simulation canvas:
 
 - **Scoreboard** (top centre) — one row per participant showing a colour swatch and that
-  participant's current number of living cells: the human player plus three computer
-  players, each of which draws its own rules at random when the game starts.
+  participant's current number of living cells: the human player plus the three computer
+  players defined by the level.
 - **Control bar** (bottom centre) — "Slow down" and "Speed up" step through five speed
   levels and the readout shows the current one. Level 5 advances one generation per
   animation frame, the fastest rate the renderer supports; each slower level holds a
   generation for twice as many frames. "Exit" abandons the game and returns to the title
   screen without asking the simulation to record a score.
+
+### Levels
+
+A level defines how a game begins. It fixes four things:
+
+- the grid dimensions,
+- the **starting pattern** — the state of every cell at generation 0,
+- the participants, and
+- the three rules each computer player starts with.
+
+It deliberately does not fix the human player's rules. Those stay with the player, chosen
+on the game-configuration screen and handed to the level when the game starts. A level
+therefore carries the human as a `HumanPlayerSlot` — an id and a name, no rules — while
+each computer player is a full `Player`.
+
+| Method | Description |
+|--------|-------------|
+| `level.createPlayers(humanRules)` | Assemble the roster, human first, with the supplied rules |
+| `level.createSimulation(humanRules, hiScore?)` | Build a `Simulation` at generation 0 with the starting pattern applied |
+
+#### Level 1
+
+A 100×100 grid opening on a checker of 10×10-cell blocks. The block at
+(`blockX`, `blockY`) takes entry `(blockX + blockY) % 5` of the sequence
+`[1, 2, 3, 4, null]`, so the cycle advances along both axes. The top-left corner, one
+character per block (`.` is empty):
+
+```
+1 2 3 4 . 1 2 3 4 .
+2 3 4 . 1 2 3 4 . 1
+3 4 . 1 2 3 4 . 1 2
+4 . 1 2 3 4 . 1 2 3
+. 1 2 3 4 . 1 2 3 4
+```
+
+The five-entry cycle divides the ten blocks per row exactly. That matters because the grid
+is toroidal: a cycle length that did not divide ten would put two same-coloured blocks
+side by side at the wrap boundary. Each participant opens with 20 blocks — 2,000 cells —
+and 2,000 cells start empty.
+
+| id | Name | Colour | Rules |
+|----|------|--------|-------|
+| 1 | `Player 1` | red | Chosen on the configuration screen |
+| 2 | `Computer 1` | blue | Born at 3, Survive 2–3, Survive 3–4 |
+| 3 | `Computer 2` | green | Born at 1, Survive at 1, Born at 2–3 |
+| 4 | `Computer 3` | yellow | Born at 1–2, Survive 4–5, Survive 2–3 |
+
+#### Determinism
+
+`Simulation.run` is already a pure function of the grid and the players' rules, so fixing
+the starting grid and the computer rules leaves the human's selection as the only variable
+input. Given the same three rules, a level run is reproducible generation for generation:
+the same grid, the same cell counts, the same death generation.
+
+The guarantee is exactly that — from pressing "Start game" to the grid dying, no
+randomness is consulted. `simulation.seedRandom` still exists for non-level use but is not
+called by a level start, and the configuration screen still preselects three presets at
+random, which happens before the player confirms and is outside the guarantee.
 
 ### Hi-score
 

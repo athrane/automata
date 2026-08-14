@@ -1,3 +1,4 @@
+import { LEVEL_ONE } from '../simulation';
 import { StateMachine } from '../state';
 import { GameConfigurationScreen, GameOverScreen, GamePlayingScreen, TitleScreen } from './screens';
 import type { RulePreset } from './RulePreset';
@@ -76,7 +77,7 @@ export class GameController {
   private handleStartGame(selectedPresets: RulePreset[]): void {
     this.stateMachine.transition('game');
     this.configScreen.hide();
-    this.gamePlayingScreen.show(selectedPresets);
+    this.gamePlayingScreen.show(LEVEL_ONE, selectedPresets);
   }
 
   private handleContinueToTitleScreen(): void {

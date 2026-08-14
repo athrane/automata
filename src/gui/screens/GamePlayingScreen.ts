@@ -1,6 +1,6 @@
-import { HiScore, Simulation, SimulationOptions } from '../../simulation';
-import type { HiScoreEntry } from '../../simulation';
-import { createGameParticipants, HUMAN_PLAYER_NAME } from '../GameParticipants';
+import { HiScore, Simulation } from '../../simulation';
+import type { HiScoreEntry, Level } from '../../simulation';
+import { createLevelParticipants, HUMAN_PLAYER_NAME } from '../GameParticipants';
 import { GuiOptions } from '../GuiOptions';
 import type { RulePreset } from '../RulePreset';
 import { SimulationRenderer } from '../SimulationRenderer';
@@ -13,19 +13,6 @@ const CANVAS_WIDTH = 800;
 
 /** Canvas height in pixels. */
 const CANVAS_HEIGHT = 800;
-
-/** Simulation grid width in cells. */
-const GRID_WIDTH = 100;
-
-/** Simulation grid height in cells. */
-const GRID_HEIGHT = 100;
-
-/**
- * Fraction of the remaining empty cells populated for each participant when
- * seeding the grid at game start. Chosen so the four participants together
- * fill roughly the same share of the grid as a single player used to.
- */
-const PLAYER_SEED_DENSITY = 0.075;
 
 /** Interval in milliseconds between scoreboard refreshes. */
 const SCORE_REFRESH_INTERVAL_MS = 200;
@@ -86,22 +73,25 @@ export class GamePlayingScreen {
   }
 
   /**
-   * Builds a simulation from the selected presets and three rule-driven computer
-   * players, appends a canvas to the container, shows both overlays, and starts
-   * the render loop.
+   * Builds the level's simulation, giving the human player the selected rules,
+   * appends a canvas to the container, shows both overlays, and starts the
+   * render loop.
    *
+   * The grid is populated by the level's starting pattern, so no randomness is
+   * consulted between this call and the grid dying.
+   *
+   * @param level - The level to play, defining the grid, the pattern, and the computer players.
    * @param selectedPresets - Rule presets chosen by the player on the configuration screen.
    */
-  public show(selectedPresets: RulePreset[]): void {
-    const participants = createGameParticipants(selectedPresets);
-    const players = participants.map((participant) => participant.player);
+  public show(level: Level, selectedPresets: RulePreset[]): void {
+    const humanRules = selectedPresets.map((preset) => preset.rule);
 
-    const simulationOptions = SimulationOptions.create(GRID_WIDTH, GRID_HEIGHT, players);
-    const simulation = Simulation.create(simulationOptions);
+    const simulation = level.createSimulation(humanRules);
     this.simulation = simulation;
-    for (const player of players) {
-      simulation.seedRandom(PLAYER_SEED_DENSITY, player.id);
-    }
+
+    // Derived from the simulation rather than built alongside it, so the
+    // scoreboard and the colour map cannot drift from the running roster.
+    const participants = createLevelParticipants(simulation.getPlayers());
 
     const guiOptions = GuiOptions.create(
       CANVAS_WIDTH,

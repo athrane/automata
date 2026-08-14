@@ -1,3 +1,4 @@
+import type { Player } from '../simulation/player/Player';
 import type { Rule } from '../simulation/rule/Rule';
 import { AVAILABLE_RULE_PRESETS } from './AvailableRulePresets';
 import type { GameParticipant } from './GameParticipant';
@@ -15,6 +16,20 @@ const HUMAN_PLAYER_COLOR = 0xff0000;
 
 /** Three.js hex colours of the computer players' cells, in scoreboard order. */
 const COMPUTER_PLAYER_COLORS: ReadonlyArray<number> = [0x0080ff, 0x00cc44, 0xffcc00];
+
+/**
+ * Three.js hex colour of a player whose id has no entry in {@link PLAYER_COLORS},
+ * so a level that adds a participant still renders.
+ */
+const DEFAULT_PLAYER_COLOR = 0xffffff;
+
+/** Three.js hex colour of each player's cells, keyed by player id. */
+const PLAYER_COLORS: ReadonlyMap<number, number> = new Map([
+  [HUMAN_PLAYER_ID, HUMAN_PLAYER_COLOR],
+  ...COMPUTER_PLAYER_COLORS.map(
+    (color, index): [number, number] => [HUMAN_PLAYER_ID + index + 1, color],
+  ),
+]);
 
 /** Number of rule presets drawn at random for each computer player. */
 const RULES_PER_COMPUTER_PLAYER = 3;
@@ -49,6 +64,23 @@ export function createGameParticipants(selectedPresets: RulePreset[]): GameParti
   }));
 
   return [human, ...computers];
+}
+
+/**
+ * Pairs each player of a running simulation with the colour its cells are drawn in.
+ *
+ * Takes players rather than a level so the caller can pass
+ * `simulation.getPlayers()`, keeping the scoreboard and the renderer's colour
+ * map derived from the roster the simulation is actually running.
+ *
+ * @param players - The players taking part, in scoreboard order.
+ * @returns The participants of a single game.
+ */
+export function createLevelParticipants(players: ReadonlyArray<Player>): GameParticipant[] {
+  return players.map((player) => ({
+    player,
+    color: PLAYER_COLORS.get(player.id) ?? DEFAULT_PLAYER_COLOR,
+  }));
 }
 
 /**
