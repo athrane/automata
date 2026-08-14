@@ -1,3 +1,5 @@
+import type { ClaimStrategy } from "./claim/ClaimStrategy";
+import { FirstMatchClaimStrategy } from "./claim/FirstMatchClaimStrategy";
 import { HiScore } from "./hiscore/HiScore";
 import type { Player } from "./player/Player";
 
@@ -21,16 +23,21 @@ export class SimulationOptions {
   /** Hi-score list the simulation records completed games into. */
   readonly hiScore: HiScore;
 
+  /** Decides which player claims a cell matched by more than one of them. */
+  readonly claimStrategy: ClaimStrategy;
+
   private constructor(
     width: number,
     height: number,
     players: Player[],
     hiScore: HiScore,
+    claimStrategy: ClaimStrategy,
   ) {
     this.width = width;
     this.height = height;
     this.players = players;
     this.hiScore = hiScore;
+    this.claimStrategy = claimStrategy;
   }
 
   /**
@@ -40,6 +47,7 @@ export class SimulationOptions {
    * @param height - Grid height in cells. Defaults to 100.
    * @param players - Players to include. Defaults to an empty array.
    * @param hiScore - Hi-score list to record into. Defaults to the shared list.
+   * @param claimStrategy - Decides contested cells. Defaults to first match in roster order.
    * @returns A validated SimulationOptions instance.
    * @throws {RangeError} If width or height is not positive.
    */
@@ -48,11 +56,13 @@ export class SimulationOptions {
     height?: number,
     players?: Player[],
     hiScore?: HiScore,
+    claimStrategy?: ClaimStrategy,
   ): SimulationOptions {
     const resolvedWidth = width ?? DEFAULT_WIDTH;
     const resolvedHeight = height ?? DEFAULT_HEIGHT;
     const resolvedPlayers = players ?? [];
     const resolvedHiScore = hiScore ?? HiScore.shared();
+    const resolvedClaimStrategy = claimStrategy ?? FirstMatchClaimStrategy.create();
 
     if (resolvedWidth <= 0) {
       throw new RangeError("width must be a positive number");
@@ -66,6 +76,7 @@ export class SimulationOptions {
       resolvedHeight,
       resolvedPlayers,
       resolvedHiScore,
+      resolvedClaimStrategy,
     );
   }
 }
