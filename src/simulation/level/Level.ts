@@ -1,3 +1,5 @@
+import type { ClaimStrategy } from "../claim/ClaimStrategy";
+import { FirstMatchClaimStrategy } from "../claim/FirstMatchClaimStrategy";
 import type { HiScore } from "../hiscore/HiScore";
 import type { Player } from "../player/Player";
 import type { Rule } from "../rule/Rule";
@@ -39,6 +41,9 @@ export class Level {
   /** The state of the grid at generation 0. */
   readonly startingPattern: StartingPattern;
 
+  /** Decides which player claims a cell matched by more than one of them. */
+  readonly claimStrategy: ClaimStrategy;
+
   private constructor(
     id: number,
     name: string,
@@ -46,6 +51,7 @@ export class Level {
     height: number,
     roster: LevelRoster,
     startingPattern: StartingPattern,
+    claimStrategy: ClaimStrategy,
   ) {
     this.id = id;
     this.name = name;
@@ -53,6 +59,7 @@ export class Level {
     this.height = height;
     this.roster = roster;
     this.startingPattern = startingPattern;
+    this.claimStrategy = claimStrategy;
   }
 
   /**
@@ -64,6 +71,7 @@ export class Level {
    * @param height - Grid height in cells.
    * @param roster - The human slot and the computer players.
    * @param startingPattern - The state of the grid at generation 0.
+   * @param claimStrategy - Decides contested cells. Defaults to first match in roster order.
    * @returns A validated Level instance.
    * @throws {RangeError} If width or height is not positive, or the roster has no computer players.
    * @throws {Error} If the human and computer players do not all have distinct ids.
@@ -75,6 +83,7 @@ export class Level {
     height: number,
     roster: LevelRoster,
     startingPattern: StartingPattern,
+    claimStrategy?: ClaimStrategy,
   ): Level {
     if (width <= 0) {
       throw new RangeError("width must be a positive number");
@@ -93,7 +102,15 @@ export class Level {
       throw new Error("player ids must be unique");
     }
 
-    return new Level(id, name, width, height, roster, startingPattern);
+    return new Level(
+      id,
+      name,
+      width,
+      height,
+      roster,
+      startingPattern,
+      claimStrategy ?? FirstMatchClaimStrategy.create(),
+    );
   }
 
   /**
@@ -133,7 +150,13 @@ export class Level {
    */
   public createSimulation(humanRules: Rule[], hiScore?: HiScore): Simulation {
     const players = this.createPlayers(humanRules);
-    const options = SimulationOptions.create(this.width, this.height, players, hiScore);
+    const options = SimulationOptions.create(
+      this.width,
+      this.height,
+      players,
+      hiScore,
+      this.claimStrategy,
+    );
     const simulation = Simulation.create(options);
 
     simulation.applyStartingPattern(this.startingPattern);

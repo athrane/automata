@@ -1,4 +1,5 @@
 import type { Cell } from "./Cell";
+import { CellClaim } from "./claim/CellClaim";
 import type { Grid } from "./Grid";
 import type { HiScore } from "./hiscore/HiScore";
 import type { HiScoreEntry } from "./hiscore/HiScoreEntry";
@@ -30,6 +31,9 @@ export class Simulation {
   /** Hi-score list this simulation records completed games into. */
   private readonly hiScore: HiScore;
 
+  /** Resolves the owner of each cell in the next generation. */
+  private readonly cellClaim: CellClaim;
+
   /**
    * @param options - Configuration for grid dimensions and players.
    */
@@ -38,6 +42,7 @@ export class Simulation {
     this.height = options.height;
     this.players = options.players;
     this.hiScore = options.hiScore;
+    this.cellClaim = CellClaim.create(options.claimStrategy);
     this.generation = 0;
     this.grid = Array.from({ length: this.height }, () =>
       Array.from({ length: this.width }, () => null as Cell),
@@ -83,12 +88,13 @@ export class Simulation {
 
   /**
    * Advances the simulation by one generation and returns the new grid.
-   * Each cell is assigned to the first player with at least one matching rule.
    *
-   * A player's rules are combined with OR, not AND: each rule (e.g. a "born"
-   * or a "survive" preset) independently grants the cell, since requiring
-   * every selected rule to match the same cell simultaneously is almost
-   * never satisfiable and causes the grid to die out within a generation or two.
+   * Each cell is resolved by the configured claim strategy, which decides
+   * between the players whose rules match it. See {@link CellClaim}.
+   *
+   * The generation passed to the resolver is the one being read, before the
+   * increment below, so a strategy that varies with the generation applies
+   * one value to the whole sweep instead of shifting part way through it.
    */
   run(): Grid {
     const nextGrid: Grid = Array.from({ length: this.height }, () =>
@@ -97,16 +103,13 @@ export class Simulation {
 
     for (let y = 0; y < this.height; y += 1) {
       for (let x = 0; x < this.width; x += 1) {
-        for (const player of this.players) {
-          const isMatch = player.rules.some((rule) =>
-            rule.matches(this.grid, x, y, player.id),
-          );
-
-          if (isMatch) {
-            nextGrid[y][x] = player.id;
-            break;
-          }
-        }
+        nextGrid[y][x] = this.cellClaim.resolve(
+          this.grid,
+          x,
+          y,
+          this.players,
+          this.generation,
+        );
       }
     }
 

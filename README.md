@@ -122,6 +122,42 @@ and 2,000 cells start empty.
 | 3 | `Computer 2` | green | Born at 1, Survive at 1, Born at 2–3 |
 | 4 | `Computer 3` | yellow | Born at 1–2, Survive 4–5, Survive 2–3 |
 
+#### Cell claim
+
+A cell's owner in the next generation is decided in two steps.
+
+1. **Candidates.** Every player with at least one rule matching the cell becomes a
+   candidate. A player's rules are combined with OR, not AND — one matching rule is
+   enough — and the number that matched is recorded as the player's match strength.
+2. **Winner.** The level's **claim strategy** picks one candidate, or leaves the cell
+   empty. A cell no player matched is empty without the strategy being asked.
+
+The default strategy is `FirstMatchClaimStrategy`, which awards the cell to the candidate
+earliest in the roster. Since `createPlayers` puts the human first, the human player wins
+every contested cell unless the level says otherwise. Pass a strategy as the seventh
+argument to `Level.create` to change that:
+
+| Strategy | Winner | Effect on play |
+|----------|--------|----------------|
+| `FirstMatchClaimStrategy` | Lowest roster index | The default. Roster position is a fixed priority |
+| `IncumbentClaimStrategy` | The current occupant, if it still matches | Territory is defensible; a player is displaced only when its own rules stop matching |
+| `StrongestMatchClaimStrategy` | Most matching rules | Rewards rule sets that fit the neighbourhood over roster position |
+| `NeighbourMajorityClaimStrategy` | Most owned neighbours | Growth spreads from established territory rather than from priority |
+| `RotatingPriorityClaimStrategy` | Roster index rotated by generation | Shares the first-match advantage across the roster over a run |
+| `ContestedCellVoidStrategy` | Nobody, when contested | Boundaries erode into empty front lines instead of one player absorbing another |
+
+All but `FirstMatchClaimStrategy` and `RotatingPriorityClaimStrategy` take another strategy
+to settle what they leave undecided, so they compose:
+
+```ts
+IncumbentClaimStrategy.create(
+  StrongestMatchClaimStrategy.create(FirstMatchClaimStrategy.create()),
+);
+```
+
+Every strategy is a pure function of the grid, the roster, and the generation number — none
+consults `Math.random()` — so the determinism guarantee below holds under all of them.
+
 #### Determinism
 
 `Simulation.run` is already a pure function of the grid and the players' rules, so fixing
