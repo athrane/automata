@@ -56,3 +56,5 @@ When generating proposals, check:
 - [ ] **Documentation** — Gaps between code and docs, stale references
 
 For each area, proposals should be **specific** (name the exact file), **actionable** (one-sentence change description), and **non-breaking** (don't alter runtime behavior).
+
+When a proposal has more than one viable direction, load [grill-me](../grill-me/SKILL.md) and resolve the direction through the interview before recording the proposal.

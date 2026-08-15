@@ -57,6 +57,8 @@ Load [pr-template.md](../../../.github/.requirements/pr-template.md) and populat
 
 ### Step 4 — Build the implementation plan
 
+If the plan involves ambiguous or high-impact design decisions, load [grill-me](../grill-me/SKILL.md) and run the interview first — write the phases from its final summary.
+
 Write ordered phases that reflect the actual change sequence. Every phase must satisfy:
 
 - **Title**: Names the goal, not just a number (e.g. `Phase 1 — Introduce GeometryRule interface`).

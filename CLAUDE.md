@@ -14,6 +14,7 @@ Domain knowledge is packaged in `.claude/skills/`. Load a skill only when its ar
 | `mandatory-code-requirements` | Before writing any new TypeScript class |
 | `code-quality` | When reviewing code or before submitting a PR |
 | `solid-principles` | When performing a design review |
+| `grill-me` | When asked to grill/challenge a plan, or before implementing an ambiguous design |
 | `fowler-refactoring` | When asked to refactor |
 | `test-standards` / `typescript-unit-tests` | When writing or reviewing tests |
 | `validation-pipeline` | Before committing — run lint → test → build |
