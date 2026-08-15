@@ -24,6 +24,9 @@ const MINIMUM_GENERATIONS_BEFORE_GAME_OVER = 5;
 /** Frames each generation is held for until {@link SimulationRenderer.setFramesPerGeneration} says otherwise. */
 const DEFAULT_FRAMES_PER_GENERATION = 1;
 
+/** Width, in canvas pixels, of the background-coloured gap rendered between adjacent cells. */
+const GRID_LINE_WIDTH_PIXELS = 1;
+
 /**
  * Renders a {@link Simulation} grid in a browser using Three.js.
  *
@@ -89,10 +92,13 @@ export class SimulationRenderer {
     this.camera.position.set(0, 0, CAMERA_Z);
     this.camera.lookAt(0, 0, 0);
 
+    const cellWidth = 1 - (GRID_LINE_WIDTH_PIXELS * this.simulation.width) / this.options.width;
+    const cellHeight = 1 - (GRID_LINE_WIDTH_PIXELS * this.simulation.height) / this.options.height;
+
     for (let y = 0; y < this.simulation.height; y += 1) {
       this.meshGrid[y] = [];
       for (let x = 0; x < this.simulation.width; x += 1) {
-        const geometry = new THREE.PlaneGeometry(1, 1);
+        const geometry = new THREE.PlaneGeometry(cellWidth, cellHeight);
         const material = new THREE.MeshBasicMaterial({ color: DEFAULT_CELL_COLOR });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(x + 0.5, y + 0.5, 0);
