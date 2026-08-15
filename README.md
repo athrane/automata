@@ -122,6 +122,66 @@ and 2,000 cells start empty.
 | 3 | `Computer 2` | green | Born at 1, Survive at 1, Born at 2–3 |
 | 4 | `Computer 3` | yellow | Born at 1–2, Survive 4–5, Survive 2–3 |
 
+#### Level 2
+
+A 100×100 grid opening on four 20×20 blocks, one per participant, each centred in its own
+grid quadrant. Because the grid is toroidal, the gap between every pair of blocks — including
+across the wrap boundary — is exactly 30 cells, in both directions. One character per 5 cells:
+
+```
+. . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . .
+. . . 1 1 1 1 . . . . . . 2 2 2 2 . . .
+. . . 1 1 1 1 . . . . . . 2 2 2 2 . . .
+. . . 1 1 1 1 . . . . . . 2 2 2 2 . . .
+. . . 1 1 1 1 . . . . . . 2 2 2 2 . . .
+. . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . .
+. . . 3 3 3 3 . . . . . . 4 4 4 4 . . .
+. . . 3 3 3 3 . . . . . . 4 4 4 4 . . .
+. . . 3 3 3 3 . . . . . . 4 4 4 4 . . .
+. . . 3 3 3 3 . . . . . . 4 4 4 4 . . .
+. . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . .
+```
+
+Each participant opens with 400 cells; the remaining 6,400 cells start empty.
+
+#### Level 3
+
+A 100×100 grid opening on the same four 20×20 blocks as Level 2, but tiled together at the
+centre of the grid instead of spread across its quadrants, so every participant starts
+adjacent to every other one. The cropped view below shows the 40×40 central square where
+all the action is — everything outside it is empty, one character per 5 cells:
+
+```
+1 1 1 1 2 2 2 2
+1 1 1 1 2 2 2 2
+1 1 1 1 2 2 2 2
+1 1 1 1 2 2 2 2
+3 3 3 3 4 4 4 4
+3 3 3 3 4 4 4 4
+3 3 3 3 4 4 4 4
+3 3 3 3 4 4 4 4
+```
+
+Each participant opens with 400 cells, the same as Level 2 — only their placement differs.
+
+#### Choosing a level
+
+The game-configuration screen opens with a level selector offering Level 1, Level 2, Level
+3, and a **Custom** option. Choosing "Custom" reveals two more pickers: a **starting
+pattern** (the checker from Level 1, or either rectangle layout from Level 2 and Level 3)
+and a **claim strategy** (any of the six strategies below). A custom level keeps Level 1's
+grid size and roster — only the pattern and the strategy vary — so it always starts four
+participants of 100×100-cell games apart in whatever shape and contest rule the player picks.
+
 #### Cell claim
 
 A cell's owner in the next generation is decided in two steps.
@@ -135,7 +195,8 @@ A cell's owner in the next generation is decided in two steps.
 The default strategy is `FirstMatchClaimStrategy`, which awards the cell to the candidate
 earliest in the roster. Since `createPlayers` puts the human first, the human player wins
 every contested cell unless the level says otherwise. Pass a strategy as the seventh
-argument to `Level.create` to change that:
+argument to `Level.create` to change that — or, without writing code, pick one from the
+**Claim strategy** list the "Choosing a level" custom picker offers:
 
 | Strategy | Winner | Effect on play |
 |----------|--------|----------------|

@@ -1,6 +1,11 @@
 export { CheckerStartingPattern } from "./CheckerStartingPattern";
+export { createCustomLevel } from "./CustomLevel";
 export { Level } from "./Level";
-export { LEVEL_ONE } from "./LevelOne";
+export { LEVEL_ONE, LEVEL_ONE_STARTING_PATTERN } from "./LevelOne";
+export { LEVEL_TWO, LEVEL_TWO_STARTING_PATTERN } from "./LevelTwo";
+export { LEVEL_THREE, LEVEL_THREE_STARTING_PATTERN } from "./LevelThree";
+export { RectanglesStartingPattern } from "./RectanglesStartingPattern";
 export type { HumanPlayerSlot } from "./HumanPlayerSlot";
 export type { LevelRoster } from "./LevelRoster";
+export type { RectangleRegion } from "./RectangleRegion";
 export type { StartingPattern } from "./StartingPattern";

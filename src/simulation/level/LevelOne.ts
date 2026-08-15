@@ -42,18 +42,28 @@ const ROSTER: LevelRoster = {
 };
 
 /**
- * Level 1: a 100x100 grid opening on a checker of 10x10-cell blocks that
- * cycles through players 1, 2, 3, 4, and an empty block.
+ * Level 1's starting pattern: a checker of 10x10-cell blocks that cycles
+ * through players 1, 2, 3, 4, and an empty block.
  *
  * The five-entry cycle divides the ten blocks per row exactly. That matters
  * because the grid is toroidal: a cycle length that did not divide ten would
  * put two same-coloured blocks next to each other at the wrap boundary.
+ *
+ * Exported on its own so the game-configuration screen's custom-level
+ * pattern picker can offer this exact pattern without re-deriving its
+ * parameters.
  */
+export const LEVEL_ONE_STARTING_PATTERN = CheckerStartingPattern.create(
+  CHECKER_BLOCK_SIZE,
+  CHECKER_SEQUENCE,
+);
+
+/** Level 1: a 100x100 grid opening on {@link LEVEL_ONE_STARTING_PATTERN}. */
 export const LEVEL_ONE = Level.create(
   1,
   "Level 1",
   GRID_WIDTH,
   GRID_HEIGHT,
   ROSTER,
-  CheckerStartingPattern.create(CHECKER_BLOCK_SIZE, CHECKER_SEQUENCE),
+  LEVEL_ONE_STARTING_PATTERN,
 );

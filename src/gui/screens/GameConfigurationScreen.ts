@@ -1,48 +1,66 @@
+import { AVAILABLE_CLAIM_STRATEGIES } from '../AvailableClaimStrategies';
+import { AVAILABLE_LEVELS } from '../AvailableLevels';
 import { AVAILABLE_RULE_PRESETS } from '../AvailableRulePresets';
+import { AVAILABLE_STARTING_PATTERNS } from '../AvailableStartingPatterns';
 import { selectRandomPresetIndices } from '../RandomRulePresetSelection';
+import { createCustomLevel } from '../../simulation';
 
+import type { Level } from '../../simulation';
 import type { RulePreset } from '../RulePreset';
 
 /** Number of rules the player must select before the game can start. */
 const REQUIRED_RULE_COUNT = 3;
 
+/** Value of the level `<select>`'s option that switches on the custom-level controls. */
+const CUSTOM_LEVEL_OPTION_VALUE = 'custom';
+
 /**
  * Renders the game-configuration screen as a full-page DOM overlay.
  *
- * The player selects exactly {@link REQUIRED_RULE_COUNT} rule presets.
- * Each time the screen is shown, {@link REQUIRED_RULE_COUNT} presets are
- * preselected at random, so the screen opens in a startable state.
- * A "Reset" button clears that preselection; "Start game" is enabled only when
- * the correct number of rules are selected.
+ * The player picks a level — one of {@link AVAILABLE_LEVELS} or a custom
+ * combination of a starting pattern and a claim strategy — and selects
+ * exactly {@link REQUIRED_RULE_COUNT} rule presets. Each time the screen is
+ * shown, {@link REQUIRED_RULE_COUNT} presets are preselected at random, so
+ * the screen opens in a startable state. A "Reset" button clears that
+ * preselection; "Start game" is enabled only when the correct number of
+ * rules are selected.
  *
  * Use {@link GameConfigurationScreen.create} to construct an instance.
  */
 export class GameConfigurationScreen {
   private readonly container: HTMLElement;
-  private readonly onStartGame: (selected: RulePreset[]) => void;
+  private readonly onStartGame: (level: Level, selected: RulePreset[]) => void;
   private selectedIndices: Set<number>;
   private element: HTMLElement | null;
+  private selectedLevel: Level;
+  private isCustomLevelSelected: boolean;
+  private selectedStartingPatternIndex: number;
+  private selectedClaimStrategyIndex: number;
 
   private constructor(
     container: HTMLElement,
-    onStartGame: (selected: RulePreset[]) => void,
+    onStartGame: (level: Level, selected: RulePreset[]) => void,
   ) {
     this.container = container;
     this.onStartGame = onStartGame;
     this.selectedIndices = new Set();
     this.element = null;
+    this.selectedLevel = AVAILABLE_LEVELS[0];
+    this.isCustomLevelSelected = false;
+    this.selectedStartingPatternIndex = 0;
+    this.selectedClaimStrategyIndex = 0;
   }
 
   /**
    * Creates a {@link GameConfigurationScreen} instance.
    *
    * @param container - DOM element that receives the screen overlay.
-   * @param onStartGame - Callback invoked with the selected presets when "Start game" is clicked.
+   * @param onStartGame - Callback invoked with the chosen level and selected presets when "Start game" is clicked.
    * @returns A new GameConfigurationScreen instance.
    */
   public static create(
     container: HTMLElement,
-    onStartGame: (selected: RulePreset[]) => void,
+    onStartGame: (level: Level, selected: RulePreset[]) => void,
   ): GameConfigurationScreen {
     return new GameConfigurationScreen(container, onStartGame);
   }
@@ -50,6 +68,10 @@ export class GameConfigurationScreen {
   /** Builds and appends the configuration overlay to the container. */
   public show(): void {
     this.selectedIndices = new Set();
+    this.selectedLevel = AVAILABLE_LEVELS[0];
+    this.isCustomLevelSelected = false;
+    this.selectedStartingPatternIndex = 0;
+    this.selectedClaimStrategyIndex = 0;
 
     const root = document.createElement('div');
     root.style.cssText =
@@ -61,6 +83,8 @@ export class GameConfigurationScreen {
     heading.textContent = 'Configure Game';
     heading.style.cssText = 'font-size:2rem;margin:0 0 0.5rem;';
     root.appendChild(heading);
+
+    this.buildLevelControls(root);
 
     const instruction = document.createElement('p');
     instruction.textContent = `Select ${REQUIRED_RULE_COUNT} simulation rules:`;
@@ -119,7 +143,7 @@ export class GameConfigurationScreen {
     startButton.style.cssText = 'padding:0.5rem 1.5rem;font-size:1rem;cursor:pointer;';
     startButton.addEventListener('click', () => {
       const selected = [...this.selectedIndices].map((idx) => AVAILABLE_RULE_PRESETS[idx]);
-      this.onStartGame(selected);
+      this.onStartGame(this.resolveSelectedLevel(), selected);
     });
     buttonRow.appendChild(startButton);
 
@@ -148,6 +172,107 @@ export class GameConfigurationScreen {
       this.element.remove();
       this.element = null;
     }
+  }
+
+  /**
+   * Builds the "Choose a level" select and the custom-level controls it reveals,
+   * and appends both to `root`.
+   */
+  private buildLevelControls(root: HTMLElement): void {
+    const levelHeading = document.createElement('p');
+    levelHeading.textContent = 'Choose a level:';
+    levelHeading.style.cssText = 'margin:0 0 0.5rem;';
+    root.appendChild(levelHeading);
+
+    const levelSelect = document.createElement('select');
+    levelSelect.style.cssText = 'padding:0.4rem;font-size:1rem;margin-bottom:1rem;';
+
+    for (let i = 0; i < AVAILABLE_LEVELS.length; i += 1) {
+      const option = document.createElement('option');
+      option.value = String(i);
+      option.textContent = AVAILABLE_LEVELS[i].name;
+      levelSelect.appendChild(option);
+    }
+
+    const customOption = document.createElement('option');
+    customOption.value = CUSTOM_LEVEL_OPTION_VALUE;
+    customOption.textContent = 'Custom';
+    levelSelect.appendChild(customOption);
+
+    root.appendChild(levelSelect);
+
+    const customControls = this.buildCustomLevelControls();
+    root.appendChild(customControls);
+
+    levelSelect.addEventListener('change', () => {
+      if (levelSelect.value === CUSTOM_LEVEL_OPTION_VALUE) {
+        this.isCustomLevelSelected = true;
+        customControls.style.display = 'flex';
+      } else {
+        this.isCustomLevelSelected = false;
+        this.selectedLevel = AVAILABLE_LEVELS[Number(levelSelect.value)];
+        customControls.style.display = 'none';
+      }
+    });
+  }
+
+  /** Builds the starting-pattern and claim-strategy pickers, hidden until "Custom" is chosen. */
+  private buildCustomLevelControls(): HTMLElement {
+    const customControls = document.createElement('div');
+    customControls.style.cssText =
+      'display:none;flex-direction:column;gap:0.5rem;margin-bottom:1rem;';
+
+    customControls.appendChild(
+      this.buildOptionSelect('Starting pattern:', AVAILABLE_STARTING_PATTERNS, (index) => {
+        this.selectedStartingPatternIndex = index;
+      }),
+    );
+    customControls.appendChild(
+      this.buildOptionSelect('Claim strategy:', AVAILABLE_CLAIM_STRATEGIES, (index) => {
+        this.selectedClaimStrategyIndex = index;
+      }),
+    );
+
+    return customControls;
+  }
+
+  /** Builds a labelled `<select>` populated from `options`, reporting the chosen index. */
+  private buildOptionSelect(
+    labelText: string,
+    options: ReadonlyArray<{ readonly name: string }>,
+    onChange: (index: number) => void,
+  ): HTMLLabelElement {
+    const label = document.createElement('label');
+    label.textContent = labelText;
+
+    const select = document.createElement('select');
+    select.style.cssText = 'padding:0.4rem;font-size:1rem;margin-left:0.5rem;';
+
+    for (let i = 0; i < options.length; i += 1) {
+      const option = document.createElement('option');
+      option.value = String(i);
+      option.textContent = options[i].name;
+      select.appendChild(option);
+    }
+
+    select.addEventListener('change', () => {
+      onChange(Number(select.value));
+    });
+
+    label.appendChild(select);
+    return label;
+  }
+
+  /** Resolves the level to play: the selected fixed level, or a freshly built custom one. */
+  private resolveSelectedLevel(): Level {
+    if (!this.isCustomLevelSelected) {
+      return this.selectedLevel;
+    }
+
+    return createCustomLevel(
+      AVAILABLE_STARTING_PATTERNS[this.selectedStartingPatternIndex].pattern,
+      AVAILABLE_CLAIM_STRATEGIES[this.selectedClaimStrategyIndex].strategy,
+    );
   }
 
   private handleCheckboxChange(

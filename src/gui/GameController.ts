@@ -1,6 +1,6 @@
-import { LEVEL_ONE } from '../simulation';
 import { StateMachine } from '../state';
 import { GameConfigurationScreen, GameOverScreen, GamePlayingScreen, TitleScreen } from './screens';
+import type { Level } from '../simulation';
 import type { RulePreset } from './RulePreset';
 
 /**
@@ -41,7 +41,7 @@ export class GameController {
 
     this.configScreen = GameConfigurationScreen.create(
       container,
-      (selected) => { this.handleStartGame(selected); },
+      (level, selected) => { this.handleStartGame(level, selected); },
     );
 
     this.gameOverScreen = GameOverScreen.create(
@@ -74,10 +74,10 @@ export class GameController {
     this.configScreen.show();
   }
 
-  private handleStartGame(selectedPresets: RulePreset[]): void {
+  private handleStartGame(level: Level, selectedPresets: RulePreset[]): void {
     this.stateMachine.transition('game');
     this.configScreen.hide();
-    this.gamePlayingScreen.show(LEVEL_ONE, selectedPresets);
+    this.gamePlayingScreen.show(level, selectedPresets);
   }
 
   private handleContinueToTitleScreen(): void {
