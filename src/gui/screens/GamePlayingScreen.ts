@@ -108,7 +108,7 @@ export class GamePlayingScreen {
     this.scoreBoard.show(participants);
     this.speedControl.show(this.speed);
     this.scoreTimerId = setInterval(() => {
-      this.scoreBoard.update(simulation.getCellCounts());
+      this.scoreBoard.update(simulation.getScores());
     }, SCORE_REFRESH_INTERVAL_MS);
   }
 

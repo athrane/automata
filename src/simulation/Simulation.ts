@@ -34,6 +34,9 @@ export class Simulation {
   /** Resolves the owner of each cell in the next generation. */
   private readonly cellClaim: CellClaim;
 
+  /** Each player's cumulative score, added to once per completed generation. */
+  private readonly scores: Map<number, number>;
+
   /**
    * @param options - Configuration for grid dimensions and players.
    */
@@ -47,6 +50,7 @@ export class Simulation {
     this.grid = Array.from({ length: this.height }, () =>
       Array.from({ length: this.width }, () => null as Cell),
     );
+    this.scores = new Map(this.players.map((player) => [player.id, 0]));
   }
 
   /**
@@ -116,6 +120,10 @@ export class Simulation {
     this.grid = nextGrid;
     this.generation += 1;
 
+    for (const [id, count] of this.getCellCounts()) {
+      this.scores.set(id, (this.scores.get(id) ?? 0) + count);
+    }
+
     return this.getGrid();
   }
 
@@ -154,6 +162,19 @@ export class Simulation {
   }
 
   /**
+   * Returns each player's cumulative score.
+   *
+   * A player's score is the sum of the living cell count it owned at the end
+   * of every generation played so far, so it grows across the game instead
+   * of reflecting only the current standing.
+   *
+   * @returns A readonly map from player id to that player's cumulative score.
+   */
+  public getScores(): ReadonlyMap<number, number> {
+    return new Map(this.scores);
+  }
+
+  /**
    * Records a hi-score entry for a completed game.
    *
    * The score is the current generation count, so a player's score is the
@@ -178,7 +199,7 @@ export class Simulation {
 
   /**
    * Overwrites the whole grid with the given starting pattern and resets the
-   * generation counter to 0.
+   * generation counter and every player's score to 0.
    *
    * Every cell is assigned unconditionally, unlike {@link seedRandom}, which
    * skips already-occupied cells. A level start must not depend on what the
@@ -195,6 +216,9 @@ export class Simulation {
     }
 
     this.generation = 0;
+    for (const player of this.players) {
+      this.scores.set(player.id, 0);
+    }
   }
 
   /**

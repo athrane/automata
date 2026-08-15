@@ -282,6 +282,53 @@ describe("Simulation", () => {
     });
   });
 
+  describe("getScores", () => {
+    it("reports zero for every registered player before any generation runs", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, [
+          { id: 1, name: "Player 1", rules: [] },
+          { id: 2, name: "Player 2", rules: [] },
+        ]),
+      );
+
+      const scores = simulation.getScores();
+
+      expect(scores.get(1)).toBe(0);
+      expect(scores.get(2)).toBe(0);
+    });
+
+    it("adds each generation's cell count to the running total instead of replacing it", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, [
+          { id: 1, name: "Player 1", rules: [new SumRule([0, 1, 2, 3, 4, 5, 6, 7, 8])] },
+        ]),
+      );
+
+      simulation.setCell(0, 0, 1);
+      simulation.run();
+      const afterFirstRun = simulation.getCellCounts().get(1) ?? 0;
+
+      simulation.run();
+      const afterSecondRun = simulation.getCellCounts().get(1) ?? 0;
+
+      expect(simulation.getScores().get(1)).toBe(afterFirstRun + afterSecondRun);
+    });
+
+    it("keeps a player with no cells in the result", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, [
+          { id: 1, name: "Player 1", rules: [] },
+          { id: 2, name: "Player 2", rules: [] },
+        ]),
+      );
+
+      simulation.run();
+
+      expect(simulation.getScores().size).toBe(2);
+      expect(simulation.getScores().get(2)).toBe(0);
+    });
+  });
+
   describe("getPlayers", () => {
     it("returns the players supplied through the options", () => {
       const players = [
@@ -340,6 +387,20 @@ describe("Simulation", () => {
       simulation.applyStartingPattern(CheckerStartingPattern.create(2, [1, 2]));
 
       expect(simulation.generation).toBe(0);
+    });
+
+    it("resets every player's score to zero", () => {
+      const simulation = Simulation.create(
+        SimulationOptions.create(4, 4, [
+          { id: 1, name: "Player 1", rules: [new SumRule([0, 1, 2, 3, 4, 5, 6, 7, 8])] },
+        ]),
+      );
+
+      simulation.setCell(0, 0, 1);
+      simulation.run();
+      simulation.applyStartingPattern(CheckerStartingPattern.create(2, [1, 2]));
+
+      expect(simulation.getScores().get(1)).toBe(0);
     });
   });
 
