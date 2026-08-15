@@ -4,9 +4,9 @@ import type { Simulation } from '../simulation';
 const MOVEMENT_KEYS: ReadonlyMap<string, readonly [number, number]> = new Map([
   ['a', [-1, 0]],
   ['d', [1, 0]],
-  // y decreases upward because row 0 is the top row, as SimulationRenderer assumes.
-  ['w', [0, -1]],
-  ['x', [0, 1]],
+  // y decreases downward on screen: the camera in SimulationRenderer puts row 0 at the bottom.
+  ['w', [0, 1]],
+  ['x', [0, -1]],
 ]);
 
 /**
