@@ -4,8 +4,12 @@ import type { Grid } from "./Grid";
 import type { HiScore } from "./hiscore/HiScore";
 import type { HiScoreEntry } from "./hiscore/HiScoreEntry";
 import type { StartingPattern } from "./level/StartingPattern";
+import type { SimulationMode } from "./mode/SimulationMode";
+import type { GridPosition } from "./player/GridPosition";
 import type { Player } from "./player/Player";
+import type { StartPositioningStrategy } from "./player/StartPositioningStrategy";
 import { SimulationOptions } from "./SimulationOptions";
+import { wrapCoordinate } from "./WrapCoordinate";
 
 /**
  * Manages the simulation grid and advances it through generations
@@ -37,6 +41,17 @@ export class Simulation {
   /** Each player's cumulative score, added to once per completed generation. */
   private readonly scores: Map<number, number>;
 
+  /** Decides which cells a generation evaluates and whose rules are consulted for them. */
+  private readonly mode: SimulationMode;
+
+  /**
+   * The cell each player occupies, keyed by player id.
+   *
+   * Empty until {@link applyStartPositioning} is called, so a game whose mode
+   * does not use positions never carries any.
+   */
+  private readonly positions: Map<number, GridPosition>;
+
   /**
    * @param options - Configuration for grid dimensions and players.
    */
@@ -46,6 +61,8 @@ export class Simulation {
     this.players = options.players;
     this.hiScore = options.hiScore;
     this.cellClaim = CellClaim.create(options.claimStrategy);
+    this.mode = options.mode;
+    this.positions = new Map();
     this.generation = 0;
     this.grid = Array.from({ length: this.height }, () =>
       Array.from({ length: this.width }, () => null as Cell),
@@ -81,6 +98,76 @@ export class Simulation {
     return this.players;
   }
 
+  /**
+   * Assigns every registered player a starting position through `strategy`.
+   *
+   * Must be called after {@link applyStartingPattern}, since a strategy picks
+   * from the cells a player owns in the seeded grid.
+   *
+   * @param strategy - Chooses the cell each player starts on.
+   * @throws {RangeError} If a registered player owns no cell in the grid.
+   */
+  public applyStartPositioning(strategy: StartPositioningStrategy): void {
+    this.positions.clear();
+
+    for (const player of this.players) {
+      this.positions.set(player.id, strategy.selectPosition(this.grid, player.id));
+    }
+  }
+
+  /**
+   * Returns the cell a player occupies.
+   *
+   * @param playerId - The player to look up.
+   * @returns That player's position, or undefined when it has none.
+   */
+  public getPlayerPosition(playerId: number): GridPosition | undefined {
+    return this.positions.get(playerId);
+  }
+
+  /**
+   * Returns the cell each player occupies, keyed by player id.
+   *
+   * A presenter that draws the positions should read them from here rather
+   * than from the grid, so its view cannot drift from the running state.
+   *
+   * @returns A readonly view of the player positions.
+   */
+  public getPlayerPositions(): ReadonlyMap<number, GridPosition> {
+    return this.positions;
+  }
+
+  /**
+   * Moves a player by one step, if the target cell is one it may enter.
+   *
+   * The target wraps at the grid edges, matching the toroidal neighbourhood
+   * the rules already use. A cell owned by another player is refused, so a
+   * player cannot walk into foreign territory.
+   *
+   * @param playerId - The player to move.
+   * @param dx - Change in x, in cells.
+   * @param dy - Change in y, in cells.
+   * @returns True when the player moved, false when the move was refused.
+   */
+  public movePlayer(playerId: number, dx: number, dy: number): boolean {
+    const current = this.positions.get(playerId);
+    if (current === undefined) {
+      return false;
+    }
+
+    const targetX = wrapCoordinate(current.x + dx, this.width);
+    const targetY = wrapCoordinate(current.y + dy, this.height);
+    const owner = this.grid[targetY][targetX];
+
+    if (owner !== null && owner !== playerId) {
+      return false;
+    }
+
+    this.positions.set(playerId, { x: targetX, y: targetY });
+
+    return true;
+  }
+
   /** Sets the value of a single cell. Out-of-bounds coordinates are ignored. */
   setCell(x: number, y: number, value: Cell): void {
     if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
@@ -93,29 +180,22 @@ export class Simulation {
   /**
    * Advances the simulation by one generation and returns the new grid.
    *
-   * Each cell is resolved by the configured claim strategy, which decides
-   * between the players whose rules match it. See {@link CellClaim}.
+   * Which cells are evaluated is decided by the configured
+   * {@link SimulationMode}; who owns each of them is decided by the configured
+   * claim strategy. See {@link CellClaim}.
    *
-   * The generation passed to the resolver is the one being read, before the
+   * The generation passed to the mode is the one being read, before the
    * increment below, so a strategy that varies with the generation applies
    * one value to the whole sweep instead of shifting part way through it.
    */
   run(): Grid {
-    const nextGrid: Grid = Array.from({ length: this.height }, () =>
-      Array.from({ length: this.width }, () => null as Cell),
-    );
-
-    for (let y = 0; y < this.height; y += 1) {
-      for (let x = 0; x < this.width; x += 1) {
-        nextGrid[y][x] = this.cellClaim.resolve(
-          this.grid,
-          x,
-          y,
-          this.players,
-          this.generation,
-        );
-      }
-    }
+    const nextGrid = this.mode.nextGeneration({
+      grid: this.grid,
+      players: this.players,
+      generation: this.generation,
+      positions: this.positions,
+      cellClaim: this.cellClaim,
+    });
 
     this.grid = nextGrid;
     this.generation += 1;

@@ -1,7 +1,9 @@
 import type { ClaimStrategy } from "../claim/ClaimStrategy";
 import { FirstMatchClaimStrategy } from "../claim/FirstMatchClaimStrategy";
 import type { HiScore } from "../hiscore/HiScore";
+import type { SimulationMode } from "../mode/SimulationMode";
 import type { Player } from "../player/Player";
+import type { StartPositioningStrategy } from "../player/StartPositioningStrategy";
 import type { Rule } from "../rule/Rule";
 import { Simulation } from "../Simulation";
 import { SimulationOptions } from "../SimulationOptions";
@@ -143,12 +145,23 @@ export class Level {
    * The returned simulation is at generation 0 with the starting pattern
    * already applied, so the caller only has to advance it.
    *
+   * When a positioning strategy is supplied, every player is placed on the
+   * grid after the pattern has been applied, since a strategy picks from the
+   * cells a player owns at generation 0.
+   *
    * @param humanRules - Rules chosen by the human player.
    * @param hiScore - Hi-score list to record into. Defaults to the shared list.
+   * @param mode - Decides which cells a generation evaluates. Defaults to the global sweep.
+   * @param startPositioning - Places each player on the grid. Omitted for a game without positions.
    * @returns A Simulation seeded with this level's starting pattern.
    * @throws {RangeError} If humanRules is empty.
    */
-  public createSimulation(humanRules: Rule[], hiScore?: HiScore): Simulation {
+  public createSimulation(
+    humanRules: Rule[],
+    hiScore?: HiScore,
+    mode?: SimulationMode,
+    startPositioning?: StartPositioningStrategy,
+  ): Simulation {
     const players = this.createPlayers(humanRules);
     const options = SimulationOptions.create(
       this.width,
@@ -156,10 +169,15 @@ export class Level {
       players,
       hiScore,
       this.claimStrategy,
+      mode,
     );
     const simulation = Simulation.create(options);
 
     simulation.applyStartingPattern(this.startingPattern);
+
+    if (startPositioning !== undefined) {
+      simulation.applyStartPositioning(startPositioning);
+    }
 
     return simulation;
   }

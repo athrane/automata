@@ -1,6 +1,8 @@
 import type { ClaimStrategy } from "./claim/ClaimStrategy";
 import { FirstMatchClaimStrategy } from "./claim/FirstMatchClaimStrategy";
 import { HiScore } from "./hiscore/HiScore";
+import { GlobalSimulationMode } from "./mode/GlobalSimulationMode";
+import type { SimulationMode } from "./mode/SimulationMode";
 import type { Player } from "./player/Player";
 
 /** Default grid width in cells. */
@@ -26,18 +28,23 @@ export class SimulationOptions {
   /** Decides which player claims a cell matched by more than one of them. */
   readonly claimStrategy: ClaimStrategy;
 
+  /** Decides which cells a generation evaluates and whose rules are consulted for them. */
+  readonly mode: SimulationMode;
+
   private constructor(
     width: number,
     height: number,
     players: Player[],
     hiScore: HiScore,
     claimStrategy: ClaimStrategy,
+    mode: SimulationMode,
   ) {
     this.width = width;
     this.height = height;
     this.players = players;
     this.hiScore = hiScore;
     this.claimStrategy = claimStrategy;
+    this.mode = mode;
   }
 
   /**
@@ -48,6 +55,7 @@ export class SimulationOptions {
    * @param players - Players to include. Defaults to an empty array.
    * @param hiScore - Hi-score list to record into. Defaults to the shared list.
    * @param claimStrategy - Decides contested cells. Defaults to first match in roster order.
+   * @param mode - Decides which cells a generation evaluates. Defaults to the global sweep.
    * @returns A validated SimulationOptions instance.
    * @throws {RangeError} If width or height is not positive.
    */
@@ -57,12 +65,14 @@ export class SimulationOptions {
     players?: Player[],
     hiScore?: HiScore,
     claimStrategy?: ClaimStrategy,
+    mode?: SimulationMode,
   ): SimulationOptions {
     const resolvedWidth = width ?? DEFAULT_WIDTH;
     const resolvedHeight = height ?? DEFAULT_HEIGHT;
     const resolvedPlayers = players ?? [];
     const resolvedHiScore = hiScore ?? HiScore.shared();
     const resolvedClaimStrategy = claimStrategy ?? FirstMatchClaimStrategy.create();
+    const resolvedMode = mode ?? GlobalSimulationMode.create();
 
     if (resolvedWidth <= 0) {
       throw new RangeError("width must be a positive number");
@@ -77,6 +87,7 @@ export class SimulationOptions {
       resolvedPlayers,
       resolvedHiScore,
       resolvedClaimStrategy,
+      resolvedMode,
     );
   }
 }

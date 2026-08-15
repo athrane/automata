@@ -1,8 +1,9 @@
 import { HiScore, Simulation } from '../../simulation';
-import type { HiScoreEntry, Level } from '../../simulation';
-import { createLevelParticipants, HUMAN_PLAYER_NAME } from '../GameParticipants';
+import type { HiScoreEntry } from '../../simulation';
+import type { GameConfiguration } from '../GameConfiguration';
+import { createLevelParticipants, HUMAN_PLAYER_ID, HUMAN_PLAYER_NAME } from '../GameParticipants';
 import { GuiOptions } from '../GuiOptions';
-import type { RulePreset } from '../RulePreset';
+import { PlayerInputController } from '../PlayerInputController';
 import { SimulationRenderer } from '../SimulationRenderer';
 import { SimulationSpeed } from '../SimulationSpeed';
 import { ScoreBoardOverlay } from './ScoreBoardOverlay';
@@ -34,6 +35,7 @@ export class GamePlayingScreen {
   private renderer: SimulationRenderer | null;
   private speed: SimulationSpeed;
   private scoreTimerId: ReturnType<typeof setInterval> | null;
+  private inputController: PlayerInputController | null;
 
   private constructor(
     container: HTMLElement,
@@ -54,6 +56,7 @@ export class GamePlayingScreen {
     this.renderer = null;
     this.speed = SimulationSpeed.create();
     this.scoreTimerId = null;
+    this.inputController = null;
   }
 
   /**
@@ -80,14 +83,26 @@ export class GamePlayingScreen {
    * The grid is populated by the level's starting pattern, so no randomness is
    * consulted between this call and the grid dying.
    *
-   * @param level - The level to play, defining the grid, the pattern, and the computer players.
-   * @param selectedPresets - Rule presets chosen by the player on the configuration screen.
+   * A configuration that places players on the grid also gets a keyboard
+   * listener, so the human can walk its position.
+   *
+   * @param configuration - Everything the player chose on the configuration screen.
    */
-  public show(level: Level, selectedPresets: RulePreset[]): void {
-    const humanRules = selectedPresets.map((preset) => preset.rule);
+  public show(configuration: GameConfiguration): void {
+    const humanRules = configuration.presets.map((preset) => preset.rule);
 
-    const simulation = level.createSimulation(humanRules);
+    const simulation = configuration.level.createSimulation(
+      humanRules,
+      undefined,
+      configuration.mode,
+      configuration.startPositioning ?? undefined,
+    );
     this.simulation = simulation;
+
+    if (configuration.startPositioning !== null) {
+      this.inputController = PlayerInputController.create(simulation, HUMAN_PLAYER_ID);
+      this.inputController.attach();
+    }
 
     // Derived from the simulation rather than built alongside it, so the
     // scoreboard and the colour map cannot drift from the running roster.
@@ -147,11 +162,22 @@ export class GamePlayingScreen {
     this.onGameOver();
   }
 
-  /** Stops the scoreboard refresh and removes both in-game overlays. */
+  /**
+   * Stops the scoreboard refresh, detaches the keyboard listener, and removes
+   * both in-game overlays.
+   *
+   * Called from both {@link hide} and {@link handleGameOver}, so no listener
+   * or timer survives a finished or abandoned game.
+   */
   private removeOverlays(): void {
     if (this.scoreTimerId !== null) {
       clearInterval(this.scoreTimerId);
       this.scoreTimerId = null;
+    }
+
+    if (this.inputController !== null) {
+      this.inputController.detach();
+      this.inputController = null;
     }
 
     this.speedControl.hide();

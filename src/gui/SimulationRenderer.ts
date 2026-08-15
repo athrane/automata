@@ -28,6 +28,17 @@ const DEFAULT_FRAMES_PER_GENERATION = 1;
 const GRID_LINE_WIDTH_PIXELS = 1;
 
 /**
+ * Duration in milliseconds of one full pulse of a cell occupied by a player.
+ *
+ * Driven by wall-clock time rather than the frame count, so changing the
+ * simulation speed does not change the pulse rate.
+ */
+const POSITION_PULSE_PERIOD_MS = 1000;
+
+/** Colour a player's own colour is blended toward at the peak of the pulse. */
+const POSITION_PULSE_COLOR = 0xffffff;
+
+/**
  * Renders a {@link Simulation} grid in a browser using Three.js.
  *
  * Use the static factory method {@link SimulationRenderer.create} to construct an instance.
@@ -39,6 +50,9 @@ export class SimulationRenderer {
   private readonly scene: THREE.Scene;
   private readonly camera: THREE.OrthographicCamera;
   private readonly meshGrid: THREE.Mesh[][];
+  /** Scratch colours reused every frame, so drawing the markers allocates nothing. */
+  private readonly pulseBaseColor: THREE.Color;
+  private readonly pulsePeakColor: THREE.Color;
   private frameId: number | null;
   private framesPerGeneration: number;
   private frameCount: number;
@@ -63,6 +77,8 @@ export class SimulationRenderer {
       CAMERA_FAR,
     );
     this.meshGrid = [];
+    this.pulseBaseColor = new THREE.Color();
+    this.pulsePeakColor = new THREE.Color(POSITION_PULSE_COLOR);
     this.frameId = null;
     this.framesPerGeneration = DEFAULT_FRAMES_PER_GENERATION;
     this.frameCount = 0;
@@ -111,6 +127,10 @@ export class SimulationRenderer {
   /**
    * Synchronises the Three.js scene to the current simulation grid state.
    * Updates each cell mesh colour based on the player id mapped in `playerColors`.
+   *
+   * A cell a player occupies is drawn last, pulsing between that player's
+   * colour and white. A static marker in the player's own colour would be
+   * invisible, since a player starts inside its own territory.
    */
   public render(): void {
     const grid = this.simulation.getGrid();
@@ -123,6 +143,32 @@ export class SimulationRenderer {
           : DEFAULT_CELL_COLOR;
         (this.meshGrid[y][x].material as THREE.MeshBasicMaterial).color.setHex(color);
       }
+    }
+
+    this.renderPlayerPositions();
+  }
+
+  /** Overrides the mesh at each player's position with this frame's pulse colour. */
+  private renderPlayerPositions(): void {
+    const positions = this.simulation.getPlayerPositions();
+    if (positions.size === 0) {
+      return;
+    }
+
+    // Computed once per frame rather than per position, so every marker pulses
+    // in step.
+    const phase = (performance.now() / POSITION_PULSE_PERIOD_MS) * 2 * Math.PI;
+    const blend = (Math.sin(phase) + 1) / 2;
+
+    for (const [playerId, position] of positions) {
+      const playerColor = this.options.playerColors.get(playerId) ?? DEFAULT_CELL_COLOR;
+      const material = this.meshGrid[position.y][position.x].material as THREE.MeshBasicMaterial;
+
+      material.color.lerpColors(
+        this.pulseBaseColor.setHex(playerColor),
+        this.pulsePeakColor,
+        blend,
+      );
     }
   }
 

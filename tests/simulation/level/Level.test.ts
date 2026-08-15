@@ -4,6 +4,8 @@ import { HiScore } from "../../../src/simulation/hiscore/HiScore";
 import { CheckerStartingPattern } from "../../../src/simulation/level/CheckerStartingPattern";
 import { Level } from "../../../src/simulation/level/Level";
 import type { LevelRoster } from "../../../src/simulation/level/LevelRoster";
+import { PlayerLocalSimulationMode } from "../../../src/simulation/mode/PlayerLocalSimulationMode";
+import { FirstClaimedCellPositioning } from "../../../src/simulation/player/FirstClaimedCellPositioning";
 import { SumRule } from "../../../src/simulation/rule/SumRule";
 
 /** Builds a two-player roster for tests that do not care about its contents. */
@@ -259,6 +261,102 @@ describe("Level", () => {
       );
 
       expect(() => level.createSimulation([], HiScore.create())).toThrow(RangeError);
+    });
+
+    describe("mode and positioning", () => {
+      /** A level whose checker gives player 1 and player 2 a block each. */
+      function createPositionedLevel(): Level {
+        return Level.create(
+          1,
+          "Level 1",
+          4,
+          4,
+          createRoster(),
+          CheckerStartingPattern.create(2, [1, 2]),
+        );
+      }
+
+      it("sweeps the whole grid when no mode is supplied", () => {
+        // Arrange — the human matches every cell and is first in the roster,
+        // so the global sweep awards it the whole 4x4 grid.
+        const level = createPositionedLevel();
+
+        // Act
+        const simulation = level.createSimulation(
+          [new SumRule([0, 1, 2, 3, 4, 5, 6, 7, 8])],
+          HiScore.create(),
+        );
+        simulation.run();
+
+        // Assert
+        expect(simulation.getCellCounts().get(1)).toBe(16);
+      });
+
+      it("runs the generation through the supplied mode", () => {
+        // Arrange — the same all-matching human rule reaches only the cells
+        // the human already owns once the mode is local.
+        const level = createPositionedLevel();
+
+        // Act
+        const simulation = level.createSimulation(
+          [new SumRule([0, 1, 2, 3, 4, 5, 6, 7, 8])],
+          HiScore.create(),
+          PlayerLocalSimulationMode.create(),
+          FirstClaimedCellPositioning.create(),
+        );
+        simulation.run();
+
+        // Assert — the checker gives the human two of the four 2x2 blocks.
+        expect(simulation.getCellCounts().get(1)).toBe(8);
+      });
+
+      it("assigns no positions when no positioning strategy is supplied", () => {
+        // Arrange
+        const level = createPositionedLevel();
+
+        // Act
+        const simulation = level.createSimulation([new SumRule([3])], HiScore.create());
+
+        // Assert
+        expect(simulation.getPlayerPositions().size).toBe(0);
+      });
+
+      it("positions every player from the seeded grid", () => {
+        // Arrange
+        const level = createPositionedLevel();
+
+        // Act
+        const simulation = level.createSimulation(
+          [new SumRule([3])],
+          HiScore.create(),
+          PlayerLocalSimulationMode.create(),
+          FirstClaimedCellPositioning.create(),
+        );
+
+        // Assert
+        expect(simulation.getPlayerPositions().size).toBe(2);
+        expect(simulation.getPlayerPosition(1)).toEqual({ x: 0, y: 0 });
+        expect(simulation.getPlayerPosition(2)).toEqual({ x: 2, y: 0 });
+      });
+
+      it("places each player on a cell it owns at generation 0", () => {
+        // Arrange
+        const level = createPositionedLevel();
+
+        // Act
+        const simulation = level.createSimulation(
+          [new SumRule([3])],
+          HiScore.create(),
+          PlayerLocalSimulationMode.create(),
+          FirstClaimedCellPositioning.create(),
+        );
+        const grid = simulation.getGrid();
+
+        // Assert
+        for (const [playerId, position] of simulation.getPlayerPositions()) {
+          expect(grid[position.y][position.x]).toBe(playerId);
+        }
+      });
     });
   });
 });

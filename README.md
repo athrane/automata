@@ -63,7 +63,57 @@ npm run preview
 
 `vite build` outputs to `dist/`. `vite preview` serves that output at `http://localhost:4173`.
 
+### Game modes
+
+A game is played in one of two modes, chosen at the top of the game-configuration screen.
+The mode decides *which* cells a generation evaluates; the claim strategy below decides
+*who* owns each of them.
+
+| Mode | What a generation evaluates |
+|------|-----------------------------|
+| **Global simulation** | Every cell of the grid, against every player's rules. The default, and the only mode the game had before this option existed |
+| **Player local simulation** | For each player, only the cells that player owns plus the single cell it stands on, against that player's own rules |
+
+Player local simulation gives every player a position on the grid. Two consequences follow
+from the evaluation scope:
+
+- **Territory can never be taken.** No cell is ever a candidate for two players, so a cell
+  only ever changes between its owner and empty. The claim strategy is still consulted but
+  is only ever offered one candidate, so **the claim-strategy choice has no effect in this
+  mode**.
+- **Territory only decays unless a player walks it back.** A player cannot birth a cell
+  into empty space except by standing on it. Computer players do not move, so they decay
+  steadily while the human can hold ground.
+
+Selecting player local simulation reveals a **Player positioning** picker, which decides
+where each player starts:
+
+| Strategy | Start cell |
+|----------|-----------|
+| `FirstClaimedCellPositioning` | The first cell the player owns, scanning the grid top-left to bottom-right |
+| `RandomClaimedCellPositioning` | A cell drawn uniformly from the ones the player owns, so two games open differently |
+
+Both read the grid after the starting pattern has been applied, so a player always begins
+inside its own territory. `RandomClaimedCellPositioning` consults `Math.random()` once per
+player at game start, which is the one exception to the determinism guarantee below.
+
 ### In-game controls
+
+In player local simulation, the human player walks its position with the keyboard:
+
+| Key | Move |
+|-----|------|
+| `W` | Up one cell |
+| `X` | Down one cell |
+| `A` | Left one cell |
+| `D` | Right one cell |
+
+A move applies immediately rather than at the next generation boundary. A cell owned by
+another player is refused and the position does not change; empty cells and the player's
+own cells are always legal. Movement wraps at the grid edges, exactly as the toroidal
+neighbourhood the rules use does — stepping off the left edge arrives at the right edge of
+the same row. Each occupied cell is drawn pulsing between its player's colour and white,
+at a rate independent of the simulation speed.
 
 While a game is running, two overlays sit on top of the simulation canvas:
 
@@ -175,7 +225,8 @@ Each participant opens with 400 cells, the same as Level 2 — only their placem
 
 #### Choosing a level
 
-The game-configuration screen opens with a level selector offering Level 1, Level 2, Level
+The game-configuration screen opens with a **Game mode** selector (see "Game modes" above)
+followed by a level selector offering Level 1, Level 2, Level
 3, and a **Custom** option. Choosing "Custom" reveals two more pickers: a **starting
 pattern** (the checker from Level 1, or either rectangle layout from Level 2 and Level 3)
 and a **claim strategy** (any of the six strategies below). A custom level keeps Level 1's
@@ -230,6 +281,11 @@ The guarantee is exactly that — from pressing "Start game" to the grid dying, 
 randomness is consulted. `simulation.seedRandom` still exists for non-level use but is not
 called by a level start, and the configuration screen still preselects three presets at
 random, which happens before the player confirms and is outside the guarantee.
+
+Player local simulation adds two inputs the guarantee does not cover: the human's keypresses,
+and `RandomClaimedCellPositioning` when it is the selected positioning strategy. With
+`FirstClaimedCellPositioning` and no keypresses, a player local game is as reproducible as a
+global one.
 
 ### Hi-score
 

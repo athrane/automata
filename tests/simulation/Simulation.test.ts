@@ -10,6 +10,10 @@ import type { Cell } from "../../src/simulation/Cell";
 import type { ClaimCandidate } from "../../src/simulation/claim/ClaimCandidate";
 import type { ClaimContext } from "../../src/simulation/claim/ClaimContext";
 import type { ClaimStrategy } from "../../src/simulation/claim/ClaimStrategy";
+import type { Grid } from "../../src/simulation/Grid";
+import type { GenerationContext } from "../../src/simulation/mode/GenerationContext";
+import type { SimulationMode } from "../../src/simulation/mode/SimulationMode";
+import { FirstClaimedCellPositioning } from "../../src/simulation/player/FirstClaimedCellPositioning";
 import { SumRule } from "../../src/simulation/rule";
 
 /** A strategy that records its arguments and returns a fixed winner. */
@@ -33,6 +37,32 @@ function createRecordingStrategy(winner: Cell): RecordingStrategy {
       return winner;
     },
   };
+}
+
+/** A mode that records the context it was called with and returns a fixed grid. */
+interface RecordingMode extends SimulationMode {
+  contexts: GenerationContext[];
+}
+
+/** Builds a mode that always returns `nextGrid` and records every call. */
+function createRecordingMode(nextGrid: Grid): RecordingMode {
+  const contexts: GenerationContext[] = [];
+
+  return {
+    contexts,
+    nextGeneration(context: GenerationContext): Grid {
+      contexts.push(context);
+      return nextGrid.map((row) => [...row]);
+    },
+  };
+}
+
+/** Two players with no rules, for tests that only exercise positions. */
+function createPositionedPlayers() {
+  return [
+    { id: 1, name: "Player 1", rules: [] },
+    { id: 2, name: "Player 2", rules: [] },
+  ];
 }
 
 /**
@@ -229,6 +259,249 @@ describe("Simulation", () => {
 
       expect(strategy.generations[0]).toBe(0);
       expect(strategy.generations.at(-1)).toBe(1);
+    });
+  });
+
+  describe("simulation mode", () => {
+    it("sweeps the whole grid when no mode is supplied", () => {
+      // Arrange
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, [{ id: 1, name: "Player 1", rules: [new SumRule([2])] }]),
+      );
+      simulation.setCell(0, 0, 1);
+      simulation.setCell(0, 1, 1);
+
+      // Act
+      const nextGrid = simulation.run();
+
+      // Assert
+      expect(nextGrid[1][1]).toBe(1);
+    });
+
+    it("adopts the grid returned by the injected mode", () => {
+      // Arrange
+      const mode = createRecordingMode([
+        [1, null],
+        [null, 2],
+      ]);
+      const simulation = Simulation.create(
+        SimulationOptions.create(2, 2, createPositionedPlayers(), HiScore.create(), undefined, mode),
+      );
+
+      // Act
+      const nextGrid = simulation.run();
+
+      // Assert
+      expect(nextGrid).toEqual([
+        [1, null],
+        [null, 2],
+      ]);
+      expect(simulation.getGrid()).toEqual(nextGrid);
+    });
+
+    it("passes the current grid, players and generation to the mode", () => {
+      // Arrange
+      const players = createPositionedPlayers();
+      const mode = createRecordingMode([
+        [null, null],
+        [null, null],
+      ]);
+      const simulation = Simulation.create(
+        SimulationOptions.create(2, 2, players, HiScore.create(), undefined, mode),
+      );
+      simulation.setCell(0, 0, 1);
+
+      // Act
+      simulation.run();
+      simulation.run();
+
+      // Assert
+      expect(mode.contexts[0].grid[0][0]).toBe(1);
+      expect(mode.contexts[0].players).toEqual(players);
+      expect(mode.contexts[0].generation).toBe(0);
+      expect(mode.contexts[1].generation).toBe(1);
+    });
+
+    it("passes the player positions to the mode", () => {
+      // Arrange
+      const mode = createRecordingMode([
+        [null, null],
+        [null, null],
+      ]);
+      const simulation = Simulation.create(
+        SimulationOptions.create(2, 2, createPositionedPlayers(), HiScore.create(), undefined, mode),
+      );
+      simulation.setCell(0, 0, 1);
+      simulation.setCell(1, 1, 2);
+      simulation.applyStartPositioning(FirstClaimedCellPositioning.create());
+
+      // Act
+      simulation.run();
+
+      // Assert
+      expect(mode.contexts[0].positions.get(1)).toEqual({ x: 0, y: 0 });
+      expect(mode.contexts[0].positions.get(2)).toEqual({ x: 1, y: 1 });
+    });
+  });
+
+  describe("applyStartPositioning", () => {
+    it("assigns one position per registered player", () => {
+      // Arrange
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, createPositionedPlayers()),
+      );
+      simulation.setCell(1, 0, 1);
+      simulation.setCell(2, 2, 2);
+
+      // Act
+      simulation.applyStartPositioning(FirstClaimedCellPositioning.create());
+
+      // Assert
+      expect(simulation.getPlayerPositions().size).toBe(2);
+      expect(simulation.getPlayerPosition(1)).toEqual({ x: 1, y: 0 });
+      expect(simulation.getPlayerPosition(2)).toEqual({ x: 2, y: 2 });
+    });
+
+    it("replaces the positions of an earlier call", () => {
+      // Arrange
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, [{ id: 1, name: "Player 1", rules: [] }]),
+      );
+      simulation.setCell(0, 0, 1);
+      simulation.applyStartPositioning(FirstClaimedCellPositioning.create());
+
+      // Act
+      simulation.setCell(0, 0, null);
+      simulation.setCell(2, 1, 1);
+      simulation.applyStartPositioning(FirstClaimedCellPositioning.create());
+
+      // Assert
+      expect(simulation.getPlayerPositions().size).toBe(1);
+      expect(simulation.getPlayerPosition(1)).toEqual({ x: 2, y: 1 });
+    });
+
+    it("throws RangeError when a registered player owns no cell", () => {
+      // Arrange
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, createPositionedPlayers()),
+      );
+      simulation.setCell(0, 0, 1);
+
+      // Act / Assert
+      expect(() => {
+        simulation.applyStartPositioning(FirstClaimedCellPositioning.create());
+      }).toThrow(RangeError);
+    });
+  });
+
+  describe("getPlayerPosition", () => {
+    it("returns undefined for a player that has not been positioned", () => {
+      // Arrange
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, createPositionedPlayers()),
+      );
+
+      // Act / Assert
+      expect(simulation.getPlayerPosition(1)).toBeUndefined();
+    });
+
+    it("returns no positions before positioning is applied", () => {
+      // Arrange
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, createPositionedPlayers()),
+      );
+
+      // Act / Assert
+      expect(simulation.getPlayerPositions().size).toBe(0);
+    });
+  });
+
+  describe("movePlayer", () => {
+    /** A 3x3 simulation with player 1 on (1, 1) and player 2 owning (2, 1). */
+    function createMovableSimulation(): Simulation {
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, createPositionedPlayers()),
+      );
+      simulation.setCell(1, 1, 1);
+      simulation.setCell(2, 1, 2);
+      simulation.setCell(0, 2, 2);
+      simulation.applyStartPositioning(FirstClaimedCellPositioning.create());
+
+      return simulation;
+    }
+
+    it("moves onto an unclaimed cell", () => {
+      // Arrange
+      const simulation = createMovableSimulation();
+
+      // Act
+      const moved = simulation.movePlayer(1, 0, -1);
+
+      // Assert
+      expect(moved).toBe(true);
+      expect(simulation.getPlayerPosition(1)).toEqual({ x: 1, y: 0 });
+    });
+
+    it("moves onto a cell the player already owns", () => {
+      // Arrange
+      const simulation = createMovableSimulation();
+      simulation.setCell(1, 0, 1);
+
+      // Act
+      const moved = simulation.movePlayer(1, 0, -1);
+
+      // Assert
+      expect(moved).toBe(true);
+      expect(simulation.getPlayerPosition(1)).toEqual({ x: 1, y: 0 });
+    });
+
+    it("refuses a cell owned by another player and leaves the position unchanged", () => {
+      // Arrange
+      const simulation = createMovableSimulation();
+
+      // Act
+      const moved = simulation.movePlayer(1, 1, 0);
+
+      // Assert
+      expect(moved).toBe(false);
+      expect(simulation.getPlayerPosition(1)).toEqual({ x: 1, y: 1 });
+    });
+
+    it("wraps around the left edge onto the right edge of the same row", () => {
+      // Arrange — row 0 is empty, so the walk to the edge is not refused.
+      const simulation = createMovableSimulation();
+      simulation.movePlayer(1, 0, -1);
+      simulation.movePlayer(1, -1, 0);
+
+      // Act
+      const moved = simulation.movePlayer(1, -1, 0);
+
+      // Assert
+      expect(moved).toBe(true);
+      expect(simulation.getPlayerPosition(1)).toEqual({ x: 2, y: 0 });
+    });
+
+    it("wraps around the top edge onto the bottom edge of the same column", () => {
+      // Arrange
+      const simulation = createMovableSimulation();
+      simulation.movePlayer(1, 0, -1);
+
+      // Act
+      const moved = simulation.movePlayer(1, 0, -1);
+
+      // Assert
+      expect(moved).toBe(true);
+      expect(simulation.getPlayerPosition(1)).toEqual({ x: 1, y: 2 });
+    });
+
+    it("returns false for a player that has no position", () => {
+      // Arrange
+      const simulation = Simulation.create(
+        SimulationOptions.create(3, 3, createPositionedPlayers()),
+      );
+
+      // Act / Assert
+      expect(simulation.movePlayer(1, 1, 0)).toBe(false);
     });
   });
 

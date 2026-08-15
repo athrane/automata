@@ -1,7 +1,6 @@
 import { StateMachine } from '../state';
 import { GameConfigurationScreen, GameOverScreen, GamePlayingScreen, TitleScreen } from './screens';
-import type { Level } from '../simulation';
-import type { RulePreset } from './RulePreset';
+import type { GameConfiguration } from './GameConfiguration';
 
 /**
  * Orchestrates game-state transitions and coordinates all screens and the
@@ -41,7 +40,7 @@ export class GameController {
 
     this.configScreen = GameConfigurationScreen.create(
       container,
-      (level, selected) => { this.handleStartGame(level, selected); },
+      (configuration) => { this.handleStartGame(configuration); },
     );
 
     this.gameOverScreen = GameOverScreen.create(
@@ -74,10 +73,10 @@ export class GameController {
     this.configScreen.show();
   }
 
-  private handleStartGame(level: Level, selectedPresets: RulePreset[]): void {
+  private handleStartGame(configuration: GameConfiguration): void {
     this.stateMachine.transition('game');
     this.configScreen.hide();
-    this.gamePlayingScreen.show(level, selectedPresets);
+    this.gamePlayingScreen.show(configuration);
   }
 
   private handleContinueToTitleScreen(): void {

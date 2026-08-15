@@ -25,6 +25,10 @@ export {
   RectanglesStartingPattern,
 } from "./level";
 export type { HumanPlayerSlot, LevelRoster, RectangleRegion, StartingPattern } from "./level";
+export { GlobalSimulationMode, PlayerLocalSimulationMode } from "./mode";
+export type { GenerationContext, SimulationMode } from "./mode";
+export { FirstClaimedCellPositioning, RandomClaimedCellPositioning } from "./player";
+export type { GridPosition, Player, StartPositioningStrategy } from "./player";
 export { wrapCoordinate } from "./WrapCoordinate";
 export { SimulationOptions } from "./SimulationOptions";
 export { Simulation } from "./Simulation";
