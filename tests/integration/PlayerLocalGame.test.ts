@@ -25,8 +25,8 @@ function findOwnerChanges(before: Grid, after: Grid): { from: number; to: number
 
   for (let y = 0; y < before.length; y += 1) {
     for (let x = 0; x < before[y].length; x += 1) {
-      const from = before[y][x];
-      const to = after[y][x];
+      const from = before[y][x].ownerId;
+      const to = after[y][x].ownerId;
 
       if (from !== null && to !== null && from !== to) {
         changes.push({ from, to });
@@ -61,7 +61,7 @@ describe("player local game", () => {
 
       // Assert
       for (const [playerId, position] of simulation.getPlayerPositions()) {
-        expect(grid[position.y][position.x]).toBe(playerId);
+        expect(grid[position.y][position.x].ownerId).toBe(playerId);
       }
     });
 
@@ -104,6 +104,29 @@ describe("player local game", () => {
       }
     });
 
+    it("keeps dormant territory eligible to revive instead of clearing it", () => {
+      // Arrange — play until the human's live cells dip, then confirm the
+      // grid still holds dormant cells claimed by the human that a global
+      // sweep would have erased outright.
+      const simulation = createLocalGame();
+
+      // Act
+      for (let generation = 0; generation < 10; generation += 1) {
+        simulation.run();
+      }
+
+      // Assert — the human's live count has collapsed, yet its claim on the
+      // opening block survives as dormant cells eligible to revive.
+      const grid = simulation.getGrid();
+      const dormantCells = grid.reduce(
+        (total, row) =>
+          total + row.filter((cell) => cell.ownerId === 1 && cell.value === null).length,
+        0,
+      );
+
+      expect(dormantCells).toBeGreaterThan(0);
+    });
+
     it("advances the generation counter like any other mode", () => {
       // Arrange
       const simulation = createLocalGame();
@@ -131,7 +154,7 @@ describe("player local game", () => {
       // Assert — an unclaimed cell is a legal destination.
       expect(moved).toBe(true);
       expect(simulation.getPlayerPosition(1)).toEqual(target);
-      expect(simulation.getGrid()[target.y][target.x]).toBeNull();
+      expect(simulation.getGrid()[target.y][target.x].ownerId).toBeNull();
     });
 
     it("leaves the rest of the grid unaffected by the move itself", () => {

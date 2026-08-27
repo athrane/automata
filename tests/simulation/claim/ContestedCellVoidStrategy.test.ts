@@ -17,7 +17,7 @@ function createRecordingFallback(winner: Cell): RecordingFallback {
   return {
     calls,
     needsAllCandidates: true,
-    selectWinner(candidates: ReadonlyArray<ClaimCandidate>): Cell {
+    selectWinner(candidates: ReadonlyArray<ClaimCandidate>): number | null {
       calls.push(candidates);
       return winner;
     },
@@ -35,7 +35,14 @@ function createCandidate(id: number, rosterIndex: number): ClaimCandidate {
 
 /** Builds a context these tests do not otherwise read. */
 function createContext(): ClaimContext {
-  return { grid: [[null]], x: 0, y: 0, owner: null, generation: 0, playerCount: 4 };
+  return {
+    grid: [[{ ownerId: null, value: null }]],
+    x: 0,
+    y: 0,
+    owner: null,
+    generation: 0,
+    playerCount: 4,
+  };
 }
 
 describe("ContestedCellVoidStrategy", () => {

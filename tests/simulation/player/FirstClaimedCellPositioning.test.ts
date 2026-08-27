@@ -1,17 +1,17 @@
 import type { Grid } from "../../../src/simulation/Grid";
 import { FirstClaimedCellPositioning } from "../../../src/simulation/player/FirstClaimedCellPositioning";
 
-/** Builds a square grid, filling every cell not named in `owned` with null. */
+/** Builds a square grid, filling every cell not named in `owned` as unclaimed. */
 function createGrid(
   size: number,
   owned: ReadonlyArray<readonly [number, number, number]>,
 ): Grid {
   const grid: Grid = Array.from({ length: size }, () =>
-    Array.from({ length: size }, () => null),
+    Array.from({ length: size }, () => ({ ownerId: null, value: null })),
   );
 
   for (const [x, y, playerId] of owned) {
-    grid[y][x] = playerId;
+    grid[y][x] = { ownerId: playerId, value: playerId };
   }
 
   return grid;

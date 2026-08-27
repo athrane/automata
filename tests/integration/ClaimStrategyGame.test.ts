@@ -68,9 +68,12 @@ function playBaseline(): Grid {
   return baseline;
 }
 
-/** Counts the cells of `grid` owned by nobody. */
+/** Counts the cells of `grid` claimed by nobody. */
 function countEmptyCells(grid: Grid): number {
-  return grid.reduce((total, row) => total + row.filter((cell) => cell === null).length, 0);
+  return grid.reduce(
+    (total, row) => total + row.filter((cell) => cell.ownerId === null).length,
+    0,
+  );
 }
 
 /** The alternative strategies, each composed over first match. */
@@ -130,7 +133,10 @@ describe("claim strategy game", () => {
       const rotated = play(RotatingPriorityClaimStrategy.create());
 
       const humanCells = (grid: Grid) =>
-        grid.reduce((total, row) => total + row.filter((cell) => cell === 1).length, 0);
+        grid.reduce(
+          (total, row) => total + row.filter((cell) => cell.ownerId === 1).length,
+          0,
+        );
 
       expect(humanCells(rotated)).toBeLessThan(humanCells(playBaseline()));
     });

@@ -1,4 +1,3 @@
-import type { Cell } from "../Cell";
 import type { Grid } from "../Grid";
 import type { Player } from "../player/Player";
 import type { ClaimCandidate } from "./ClaimCandidate";
@@ -47,10 +46,12 @@ export class CellClaim {
   }
 
   /**
-   * Returns the owner of the cell at (x, y) in the next generation.
+   * Returns the value of the cell at (x, y) in the next generation.
    *
    * The strategy is not consulted when no player matched: an unclaimed cell
-   * is empty, which is not a decision a strategy gets to make.
+   * is empty, which is not a decision a strategy gets to make. The caller —
+   * the simulation mode — decides the cell's persistent owner; this method
+   * decides only what the cell computes to.
    *
    * @param grid - The grid of the generation being read.
    * @param x - X coordinate of the cell to resolve.
@@ -65,7 +66,7 @@ export class CellClaim {
     y: number,
     players: ReadonlyArray<Player>,
     generation: number,
-  ): Cell {
+  ): number | null {
     const candidates: ClaimCandidate[] = [];
 
     for (let rosterIndex = 0; rosterIndex < players.length; rosterIndex += 1) {
@@ -99,7 +100,7 @@ export class CellClaim {
       grid,
       x,
       y,
-      owner: grid[y][x],
+      owner: grid[y][x].ownerId,
       generation,
       playerCount: players.length,
     });

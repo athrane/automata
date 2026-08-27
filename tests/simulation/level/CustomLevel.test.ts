@@ -18,8 +18,8 @@ describe("createCustomLevel", () => {
 
     const simulation = level.createSimulation(level.roster.computers[0].rules);
 
-    expect(simulation.getGrid()[15][15]).toBe(1);
-    expect(simulation.getGrid()[0][0]).toBeNull();
+    expect(simulation.getGrid()[15][15]).toEqual({ ownerId: 1, value: 1 });
+    expect(simulation.getGrid()[0][0]).toEqual({ ownerId: null, value: null });
   });
 
   it("applies the supplied claim strategy", () => {

@@ -59,7 +59,7 @@ export class SumRule implements Rule {
         const nextX = wrapCoordinate(x + xOffset, width);
         const nextY = wrapCoordinate(y + yOffset, height);
 
-        if (grid[nextY][nextX] === playerId) {
+        if (grid[nextY][nextX].value === playerId) {
           count += 1;
         }
       }

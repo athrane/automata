@@ -1,4 +1,3 @@
-import type { Cell } from "../Cell";
 import type { ClaimCandidate } from "./ClaimCandidate";
 import type { ClaimStrategy } from "./ClaimStrategy";
 
@@ -33,7 +32,7 @@ export class FirstMatchClaimStrategy implements ClaimStrategy {
    * @param candidates - The players whose rules matched, in roster order.
    * @returns The first candidate's player id.
    */
-  public selectWinner(candidates: ReadonlyArray<ClaimCandidate>): Cell {
+  public selectWinner(candidates: ReadonlyArray<ClaimCandidate>): number | null {
     return candidates[0].player.id;
   }
 }

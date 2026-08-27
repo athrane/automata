@@ -1,17 +1,21 @@
-import type { Cell } from "../Cell";
-import type { Grid } from "../Grid";
-import type { GridPosition } from "../player/GridPosition";
+import type { Grid } from "../Grid";import type { GridPosition } from "../player/GridPosition";
 import type { Player } from "../player/Player";
 import type { GenerationContext } from "./GenerationContext";
 import type { SimulationMode } from "./SimulationMode";
 
 /**
- * Applies each player's rules only to the cells that player owns plus the cell
+ * Applies each player's rules only to the cells that player claims plus the cell
  * it occupies.
+ *
+ * A claim is persistent: once a player has claimed a cell it keeps it even
+ * through generations where its rules stop matching and the cell's value goes
+ * null. A dormant claimed cell is still bucketed under its owner, so it is
+ * re-evaluated every generation and can revive — return to a live value —
+ * without the player having to walk back onto it.
  *
  * A cell is therefore never a candidate for two players, so a player can never
  * take territory from another one, and can only birth a cell into empty space
- * by standing on it. Territory decays unless a player walks it back.
+ * by standing on it.
  *
  * The claim strategy configured for the game is still consulted, but it is
  * only ever offered a single candidate, so its choice cannot differ from
@@ -35,22 +39,22 @@ export class PlayerLocalSimulationMode implements SimulationMode {
   }
 
   /**
-   * Resolves each player's owned cells and occupied cell, leaving every other
-   * cell empty.
+   * Resolves each player's claimed cells and occupied cell, leaving every other
+   * cell untouched.
    *
-   * Starting from an all-empty grid loses nothing, because a cell's value *is*
-   * its owner: every non-null cell belongs to exactly one player's evaluated
-   * set, so the only cells left untouched are the ones that were empty already.
+   * Starting from an all-empty grid loses nothing, because every cell a player
+   * has ever claimed belongs to exactly one player's evaluated set, so the only
+   * cells left untouched are the ones no player has ever claimed.
    *
    * @param context - The state of the generation being read.
-   * @returns A new grid holding the owner of each cell in the next generation.
+   * @returns A new grid holding the owner and value of each cell in the next generation.
    */
   public nextGeneration(context: GenerationContext): Grid {
     const height = context.grid.length;
     const width = context.grid[0]?.length ?? 0;
 
     const nextGrid: Grid = Array.from({ length: height }, () =>
-      Array.from({ length: width }, () => null as Cell),
+      Array.from({ length: width }, () => ({ ownerId: null, value: null })),
     );
 
     const ownedCells = this.bucketCellsByOwner(context.grid);
@@ -70,13 +74,16 @@ export class PlayerLocalSimulationMode implements SimulationMode {
         }
 
         resolvedCells.add(key);
-        nextGrid[cell.y][cell.x] = context.cellClaim.resolve(
-          context.grid,
-          cell.x,
-          cell.y,
-          [player],
-          context.generation,
-        );
+        nextGrid[cell.y][cell.x] = {
+          ownerId: player.id,
+          value: context.cellClaim.resolve(
+            context.grid,
+            cell.x,
+            cell.y,
+            [player],
+            context.generation,
+          ),
+        };
       }
     }
 
@@ -84,10 +91,14 @@ export class PlayerLocalSimulationMode implements SimulationMode {
   }
 
   /**
-   * Groups every occupied cell of the grid under the id of the player owning it.
+   * Groups every claimed cell of the grid under the id of the player claiming it.
+   *
+   * Bucketing reads the persistent claim rather than the current value, so a
+   * dormant cell — owned but currently valueless — stays in its owner's bucket
+   * and is evaluated again next generation.
    *
    * @param grid - The grid of the generation being read.
-   * @returns A map from player id to the cells that player owns.
+   * @returns A map from player id to the cells that player claims.
    */
   private bucketCellsByOwner(grid: Grid): Map<number, GridPosition[]> {
     const owned = new Map<number, GridPosition[]>();
@@ -95,7 +106,7 @@ export class PlayerLocalSimulationMode implements SimulationMode {
     for (let y = 0; y < grid.length; y += 1) {
       const row = grid[y];
       for (let x = 0; x < row.length; x += 1) {
-        const owner = row[x];
+        const owner = row[x].ownerId;
         if (owner === null) {
           continue;
         }
@@ -131,9 +142,9 @@ export class PlayerLocalSimulationMode implements SimulationMode {
       return [...ownedCells];
     }
 
-    // A position already owned by the player is in the bucket; anything else
-    // is an extra cell the player brings into evaluation by standing on it.
-    if (context.grid[position.y][position.x] === player.id) {
+    // A position already claimed by the player is in the bucket; anything
+    // else is an extra cell the player brings into evaluation by standing on it.
+    if (context.grid[position.y][position.x].ownerId === player.id) {
       return [...ownedCells];
     }
 

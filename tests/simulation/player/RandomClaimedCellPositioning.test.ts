@@ -1,17 +1,17 @@
 import type { Grid } from "../../../src/simulation/Grid";
 import { RandomClaimedCellPositioning } from "../../../src/simulation/player/RandomClaimedCellPositioning";
 
-/** Builds a square grid, filling every cell not named in `owned` with null. */
+/** Builds a square grid, filling every cell not named in `owned` as unclaimed. */
 function createGrid(
   size: number,
   owned: ReadonlyArray<readonly [number, number, number]>,
 ): Grid {
   const grid: Grid = Array.from({ length: size }, () =>
-    Array.from({ length: size }, () => null),
+    Array.from({ length: size }, () => ({ ownerId: null, value: null })),
   );
 
   for (const [x, y, playerId] of owned) {
-    grid[y][x] = playerId;
+    grid[y][x] = { ownerId: playerId, value: playerId };
   }
 
   return grid;
@@ -71,7 +71,7 @@ describe("RandomClaimedCellPositioning", () => {
         const position = RandomClaimedCellPositioning.create(() => value)
           .selectPosition(grid, 1);
 
-        expect(grid[position.y][position.x]).toBe(1);
+        expect(grid[position.y][position.x].ownerId).toBe(1);
       }
     });
 
@@ -83,7 +83,7 @@ describe("RandomClaimedCellPositioning", () => {
       const position = RandomClaimedCellPositioning.create().selectPosition(grid, 1);
 
       // Assert
-      expect(grid[position.y][position.x]).toBe(1);
+      expect(grid[position.y][position.x].ownerId).toBe(1);
     });
 
     it("throws RangeError when the player owns no cell", () => {

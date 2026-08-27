@@ -1,4 +1,3 @@
-import type { Cell } from "../Cell";
 import type { ClaimCandidate } from "./ClaimCandidate";
 import type { ClaimContext } from "./ClaimContext";
 
@@ -26,5 +25,5 @@ export interface ClaimStrategy {
    * @param context - The cell being resolved and the state surrounding it.
    * @returns The winning player's id, or null when no player claims the cell.
    */
-  selectWinner(candidates: ReadonlyArray<ClaimCandidate>, context: ClaimContext): Cell;
+  selectWinner(candidates: ReadonlyArray<ClaimCandidate>, context: ClaimContext): number | null;
 }

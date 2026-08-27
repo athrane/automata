@@ -78,12 +78,19 @@ Player local simulation gives every player a position on the grid. Two consequen
 from the evaluation scope:
 
 - **Territory can never be taken.** No cell is ever a candidate for two players, so a cell
-  only ever changes between its owner and empty. The claim strategy is still consulted but
+  never changes from one owner to another. The claim strategy is still consulted but
   is only ever offered one candidate, so **the claim-strategy choice has no effect in this
   mode**.
-- **Territory only decays unless a player walks it back.** A player cannot birth a cell
-  into empty space except by standing on it. Computer players do not move, so they decay
-  steadily while the human can hold ground.
+- **Territory dims rather than dying.** A claimed cell keeps its owner even through
+  generations where the owner's rules stop matching it. Such a cell is *dormant*: it is
+  drawn in its owner's colour toned down to 25%, it does not count toward the player's
+  score, and it does not count as a live neighbour for other cells' rules — but it stays
+  in the player's evaluated set, so it comes back to full colour on its own as soon as its
+  neighbourhood matches the owner's rules again. A player therefore never has to walk back
+  over lost ground to reclaim it.
+- **Growth still needs a foothold.** A player cannot birth a cell into unclaimed empty
+  space except by standing on it. Computer players do not move, so their live territory
+  still shrinks while the human can hold ground.
 
 Selecting player local simulation reveals a **Player positioning** picker, which decides
 where each player starts:

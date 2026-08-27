@@ -1,10 +1,11 @@
-import type { Cell } from "../Cell";
-
 /**
  * Defines the state of the grid at generation 0.
  *
  * A pattern is addressed by coordinate rather than handed out as a prebuilt
  * grid, so a single instance can be applied to a grid of any size.
+ *
+ * A pattern names a single owner id per cell; the simulation is what expands
+ * that id into a full claimed-and-alive cell.
  *
  * Implementations must be pure: `cellAt` is called once per cell of the grid
  * and must return the same value for the same coordinate every time, since a
@@ -18,5 +19,5 @@ export interface StartingPattern {
    * @param y - Row index, counted from the top edge.
    * @returns The id of the player owning the cell, or `null` if it starts empty.
    */
-  cellAt(x: number, y: number): Cell;
+  cellAt(x: number, y: number): number | null;
 }
