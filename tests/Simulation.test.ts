@@ -34,8 +34,8 @@ describe("Simulation", () => {
     const nextGrid = simulation.run();
 
     expect(simulation.generation).toBe(1);
-    expect(nextGrid[1][1]).toBe(1);
-    expect(nextGrid[0][0]).toBeNull();
+    expect(nextGrid[1][1]).toEqual({ ownerId: 1, value: 1 });
+    expect(nextGrid[0][0]).toEqual({ ownerId: null, value: null });
   });
 
   it("supports multiple players with different rulesets", () => {
@@ -51,6 +51,6 @@ describe("Simulation", () => {
 
     const nextGrid = simulation.run();
 
-    expect(nextGrid[1][1]).toBe(1);
+    expect(nextGrid[1][1]).toEqual({ ownerId: 1, value: 1 });
   });
 });

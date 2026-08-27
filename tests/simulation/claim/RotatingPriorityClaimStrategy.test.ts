@@ -18,7 +18,14 @@ function createCandidate(rosterIndex: number): ClaimCandidate {
 
 /** Builds a context for the given generation. */
 function createContext(generation: number): ClaimContext {
-  return { grid: [[null]], x: 0, y: 0, owner: null, generation, playerCount: PLAYER_COUNT };
+  return {
+    grid: [[{ ownerId: null, value: null }]],
+    x: 0,
+    y: 0,
+    owner: null,
+    generation,
+    playerCount: PLAYER_COUNT,
+  };
 }
 
 /** Every player of the roster, as candidates in roster order. */

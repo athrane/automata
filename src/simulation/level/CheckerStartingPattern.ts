@@ -1,4 +1,3 @@
-import type { Cell } from "../Cell";
 import type { StartingPattern } from "./StartingPattern";
 
 /**
@@ -18,9 +17,9 @@ export class CheckerStartingPattern implements StartingPattern {
   private readonly blockSize: number;
 
   /** Cell values cycled through, one per block. */
-  private readonly sequence: ReadonlyArray<Cell>;
+  private readonly sequence: ReadonlyArray<number | null>;
 
-  private constructor(blockSize: number, sequence: ReadonlyArray<Cell>) {
+  private constructor(blockSize: number, sequence: ReadonlyArray<number | null>) {
     this.blockSize = blockSize;
     this.sequence = sequence;
   }
@@ -36,7 +35,7 @@ export class CheckerStartingPattern implements StartingPattern {
    */
   public static create(
     blockSize: number,
-    sequence: ReadonlyArray<Cell>,
+    sequence: ReadonlyArray<number | null>,
   ): CheckerStartingPattern {
     if (!Number.isInteger(blockSize) || blockSize <= 0) {
       throw new RangeError("blockSize must be a positive integer");
@@ -55,7 +54,7 @@ export class CheckerStartingPattern implements StartingPattern {
    * @param y - Row index, counted from the top edge.
    * @returns The id of the player owning the cell, or `null` if it starts empty.
    */
-  cellAt(x: number, y: number): Cell {
+  cellAt(x: number, y: number): number | null {
     const blockX = Math.floor(x / this.blockSize);
     const blockY = Math.floor(y / this.blockSize);
 

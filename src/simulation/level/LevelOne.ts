@@ -1,4 +1,3 @@
-import type { Cell } from "../Cell";
 import { SumRule } from "../rule/SumRule";
 import { CheckerStartingPattern } from "./CheckerStartingPattern";
 import { Level } from "./Level";
@@ -13,11 +12,9 @@ const GRID_HEIGHT = 100;
 /** Width and height of one checker block, in cells. */
 const CHECKER_BLOCK_SIZE = 10;
 
-/**
- * Cell values cycled through by the checker, one per block: the four
- * participants followed by an empty block.
- */
-const CHECKER_SEQUENCE: ReadonlyArray<Cell> = [1, 2, 3, 4, null];
+/** Cell values cycled through by the checker, one per block: the four
+ * participants followed by an empty block. */
+const CHECKER_SEQUENCE: ReadonlyArray<number | null> = [1, 2, 3, 4, null];
 
 /** The participants of level 1: the human slot and three computer players. */
 const ROSTER: LevelRoster = {

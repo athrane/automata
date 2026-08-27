@@ -1,4 +1,3 @@
-import type { Cell } from "./Cell";
 import { CellClaim } from "./claim/CellClaim";
 import type { Grid } from "./Grid";
 import type { HiScore } from "./hiscore/HiScore";
@@ -65,7 +64,7 @@ export class Simulation {
     this.positions = new Map();
     this.generation = 0;
     this.grid = Array.from({ length: this.height }, () =>
-      Array.from({ length: this.width }, () => null as Cell),
+      Array.from({ length: this.width }, () => ({ ownerId: null, value: null })),
     );
     this.scores = new Map(this.players.map((player) => [player.id, 0]));
   }
@@ -157,7 +156,7 @@ export class Simulation {
 
     const targetX = wrapCoordinate(current.x + dx, this.width);
     const targetY = wrapCoordinate(current.y + dy, this.height);
-    const owner = this.grid[targetY][targetX];
+    const owner = this.grid[targetY][targetX].ownerId;
 
     if (owner !== null && owner !== playerId) {
       return false;
@@ -168,13 +167,22 @@ export class Simulation {
     return true;
   }
 
-  /** Sets the value of a single cell. Out-of-bounds coordinates are ignored. */
-  setCell(x: number, y: number, value: Cell): void {
+  /**
+   * Sets the value of a single cell. Out-of-bounds coordinates are ignored.
+   *
+   * A freshly placed cell is claimed and alive at once: the id becomes both
+   * the persistent claim and the current value.
+   *
+   * @param x - X coordinate of the cell to write.
+   * @param y - Y coordinate of the cell to write.
+   * @param id - The player claiming the cell, or null to clear it entirely.
+   */
+  setCell(x: number, y: number, id: number | null): void {
     if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
       return;
     }
 
-    this.grid[y][x] = value;
+    this.grid[y][x] = { ownerId: id, value: id };
   }
 
   /**
@@ -208,19 +216,24 @@ export class Simulation {
   }
 
   /**
-   * Returns `true` when at least one cell in the grid is occupied (non-null).
+   * Returns `true` when at least one cell in the grid is alive (has a value).
+   *
+   * Dormant claimed cells — owned but currently valueless — do not count, so
+   * game-over stays tied to living cells rather than to territory.
    */
   public hasLivingCells(): boolean {
-    return this.grid.some((row) => row.some((cell) => cell !== null));
+    return this.grid.some((row) => row.some((cell) => cell.value !== null));
   }
 
   /**
    * Counts the living cells owned by each player.
    *
    * Every registered player is present in the result, so a player with no
-   * remaining cells reports `0` rather than being omitted.
+   * remaining cells reports `0` rather than being omitted. Dormant claimed
+   * cells — owned but currently valueless — are not counted, so the score
+   * tracks live cells only.
    *
-   * @returns A map from player id to the number of cells that player owns.
+   * @returns A map from player id to the number of living cells that player owns.
    */
   public getCellCounts(): Map<number, number> {
     const counts = new Map<number, number>();
@@ -230,11 +243,11 @@ export class Simulation {
 
     for (const row of this.grid) {
       for (const cell of row) {
-        if (cell === null) {
+        if (cell.value === null) {
           continue;
         }
 
-        counts.set(cell, (counts.get(cell) ?? 0) + 1);
+        counts.set(cell.value, (counts.get(cell.value) ?? 0) + 1);
       }
     }
 
@@ -291,7 +304,8 @@ export class Simulation {
   public applyStartingPattern(pattern: StartingPattern): void {
     for (let y = 0; y < this.height; y += 1) {
       for (let x = 0; x < this.width; x += 1) {
-        this.grid[y][x] = pattern.cellAt(x, y);
+        const owner = pattern.cellAt(x, y);
+        this.grid[y][x] = { ownerId: owner, value: owner };
       }
     }
 
@@ -318,12 +332,12 @@ export class Simulation {
     }
     for (let y = 0; y < this.height; y += 1) {
       for (let x = 0; x < this.width; x += 1) {
-        if (this.grid[y][x] !== null) {
+        if (this.grid[y][x].ownerId !== null) {
           continue;
         }
 
         if (Math.random() < density) {
-          this.grid[y][x] = playerId;
+          this.grid[y][x] = { ownerId: playerId, value: playerId };
         }
       }
     }

@@ -82,7 +82,7 @@ describe("Level", () => {
       simulation.setCell(0, 0, 1);
       simulation.setCell(2, 2, 2);
 
-      expect(simulation.run()[1][1]).toBeNull();
+      expect(simulation.run()[1][1]).toEqual({ ownerId: null, value: null });
     });
   });
 
@@ -212,10 +212,10 @@ describe("Level", () => {
       const grid = simulation.getGrid();
 
       expect(simulation.generation).toBe(0);
-      expect(grid[0][0]).toBe(1);
-      expect(grid[0][2]).toBe(2);
-      expect(grid[2][0]).toBe(2);
-      expect(grid[2][2]).toBe(1);
+      expect(grid[0][0]).toEqual({ ownerId: 1, value: 1 });
+      expect(grid[0][2]).toEqual({ ownerId: 2, value: 2 });
+      expect(grid[2][0]).toEqual({ ownerId: 2, value: 2 });
+      expect(grid[2][2]).toEqual({ ownerId: 1, value: 1 });
     });
 
     it("registers the full roster with the simulation", () => {
@@ -354,7 +354,7 @@ describe("Level", () => {
 
         // Assert
         for (const [playerId, position] of simulation.getPlayerPositions()) {
-          expect(grid[position.y][position.x]).toBe(playerId);
+          expect(grid[position.y][position.x].ownerId).toBe(playerId);
         }
       });
     });

@@ -1,4 +1,3 @@
-import type { Cell } from "../Cell";
 import type { RectangleRegion } from "./RectangleRegion";
 import type { StartingPattern } from "./StartingPattern";
 
@@ -42,7 +41,7 @@ export class RectanglesStartingPattern implements StartingPattern {
    * @param y - Row index, counted from the top edge.
    * @returns The id of the player owning the cell, or `null` if it starts empty.
    */
-  cellAt(x: number, y: number): Cell {
+  cellAt(x: number, y: number): number | null {
     for (const region of this.regions) {
       const isInside =
         x >= region.x &&

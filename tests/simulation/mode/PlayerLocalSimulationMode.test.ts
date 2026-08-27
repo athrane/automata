@@ -1,5 +1,6 @@
 import { CellClaim } from "../../../src/simulation/claim/CellClaim";
 import { FirstMatchClaimStrategy } from "../../../src/simulation/claim/FirstMatchClaimStrategy";
+import type { Cell } from "../../../src/simulation/Cell";
 import type { Grid } from "../../../src/simulation/Grid";
 import type { GenerationContext } from "../../../src/simulation/mode/GenerationContext";
 import { PlayerLocalSimulationMode } from "../../../src/simulation/mode/PlayerLocalSimulationMode";
@@ -15,21 +16,34 @@ function createAlwaysMatchingRule(): SumRule {
   return new SumRule([0, 1, 2, 3, 4, 5, 6, 7, 8]);
 }
 
-/** Builds a square grid, filling every cell not named in `owned` with null. */
+/** Builds a square grid, filling every cell not named in `owned` as unclaimed. */
 function createGrid(
   size: number,
   owned: ReadonlyArray<readonly [number, number, number]>,
 ): Grid {
   const grid: Grid = Array.from({ length: size }, () =>
-    Array.from({ length: size }, () => null),
+    Array.from({ length: size }, () => ({ ownerId: null, value: null })),
   );
 
   for (const [x, y, playerId] of owned) {
-    grid[y][x] = playerId;
+    grid[y][x] = { ownerId: playerId, value: playerId };
   }
 
   return grid;
 }
+
+/** The cell written for a claimed-and-alive player id. */
+function alive(playerId: number): Cell {
+  return { ownerId: playerId, value: playerId };
+}
+
+/** The cell written for a claimed-but-dormant player id. */
+function dormant(playerId: number): Cell {
+  return { ownerId: playerId, value: null };
+}
+
+/** The cell written for a cell no player has ever claimed. */
+const EMPTY_CELL: Cell = { ownerId: null, value: null };
 
 /** Builds a context over `grid` with the default first-match claim resolution. */
 function createContext(
@@ -76,10 +90,10 @@ describe("PlayerLocalSimulationMode", () => {
       const nextGrid = mode.nextGeneration(context);
 
       // Assert
-      expect(nextGrid[2][1]).toBe(1);
+      expect(nextGrid[2][1]).toEqual(alive(1));
     });
 
-    it("clears an owned cell its player's rules no longer match", () => {
+    it("dims an owned cell its player's rules no longer match, keeping the claim", () => {
       // Arrange
       const mode = PlayerLocalSimulationMode.create();
       const context = createContext(createLineGrid(), [createLinePlayer()], new Map());
@@ -88,8 +102,8 @@ describe("PlayerLocalSimulationMode", () => {
       const nextGrid = mode.nextGeneration(context);
 
       // Assert
-      expect(nextGrid[1][1]).toBeNull();
-      expect(nextGrid[3][1]).toBeNull();
+      expect(nextGrid[1][1]).toEqual(dormant(1));
+      expect(nextGrid[3][1]).toEqual(dormant(1));
     });
 
     it("leaves an unowned cell empty even when a player's rules match it", () => {
@@ -102,7 +116,7 @@ describe("PlayerLocalSimulationMode", () => {
       const nextGrid = mode.nextGeneration(context);
 
       // Assert
-      expect(nextGrid[1][2]).toBeNull();
+      expect(nextGrid[1][2]).toEqual(EMPTY_CELL);
     });
 
     it("evaluates the cell a player occupies even when the player does not own it", () => {
@@ -115,7 +129,7 @@ describe("PlayerLocalSimulationMode", () => {
       const nextGrid = mode.nextGeneration(context);
 
       // Assert
-      expect(nextGrid[1][2]).toBe(1);
+      expect(nextGrid[1][2]).toEqual(alive(1));
     });
 
     it("never lets one player take a cell owned by another", () => {
@@ -136,9 +150,9 @@ describe("PlayerLocalSimulationMode", () => {
       const nextGrid = mode.nextGeneration(createContext(grid, players, new Map()));
 
       // Assert
-      expect(nextGrid[2][1]).toBe(1);
-      expect(nextGrid[1][1]).toBeNull();
-      expect(nextGrid[3][3]).toBe(2);
+      expect(nextGrid[2][1]).toEqual(alive(1));
+      expect(nextGrid[1][1]).toEqual(dormant(1));
+      expect(nextGrid[3][3]).toEqual(alive(2));
     });
 
     it("awards a cell two players occupy to the earlier one in roster order", () => {
@@ -160,7 +174,7 @@ describe("PlayerLocalSimulationMode", () => {
       );
 
       // Assert
-      expect(nextGrid[2][2]).toBe(1);
+      expect(nextGrid[2][2]).toEqual(alive(1));
     });
 
     it("returns a new grid rather than the one it was given", () => {
@@ -175,7 +189,7 @@ describe("PlayerLocalSimulationMode", () => {
 
       // Assert
       expect(nextGrid).not.toBe(grid);
-      expect(grid[1][1]).toBe(1);
+      expect(grid[1][1]).toEqual(alive(1));
     });
 
     it("leaves an empty grid empty", () => {
@@ -191,7 +205,63 @@ describe("PlayerLocalSimulationMode", () => {
       const nextGrid = mode.nextGeneration(context);
 
       // Assert
-      expect(nextGrid.every((row) => row.every((cell) => cell === null))).toBe(true);
+      expect(nextGrid.every((row) => row.every((cell) => cell.ownerId === null))).toBe(true);
+    });
+
+    it("re-evaluates a dormant claimed cell so it can revive", () => {
+      // Arrange — (1, 2) was claimed by player 1 but its value lapsed; the
+      // live cells at (1, 1) and (1, 3) give it exactly two neighbours, so
+      // the survive-on-2 rule brings it back to life.
+      const mode = PlayerLocalSimulationMode.create();
+      const grid = createGrid(GRID_SIZE, [
+        [1, 0, 1],
+        [1, 1, 1],
+        [1, 2, 1],
+        [1, 3, 1],
+      ]);
+      grid[2][1] = dormant(1);
+
+      // Act
+      const nextGrid = mode.nextGeneration(
+        createContext(grid, [createLinePlayer()], new Map()),
+      );
+
+      // Assert
+      expect(nextGrid[2][1]).toEqual(alive(1));
+    });
+
+    it("keeps a dormant claimed cell in its owner's hands rather than clearing it", () => {
+      // Arrange — a lone dormant cell has no live neighbours, so the rule
+      // does not match and the value stays null; the claim must survive.
+      const mode = PlayerLocalSimulationMode.create();
+      const grid = createGrid(GRID_SIZE, []);
+      grid[2][2] = dormant(1);
+
+      // Act
+      const nextGrid = mode.nextGeneration(
+        createContext(grid, [createLinePlayer()], new Map()),
+      );
+
+      // Assert
+      expect(nextGrid[2][2]).toEqual(dormant(1));
+    });
+
+    it("never pulls an unclaimed cell into a player's evaluated set by proximity", () => {
+      // Arrange — (2, 1) is unclaimed but sits between two of player 1's
+      // cells; only the claimed cells may be evaluated.
+      const mode = PlayerLocalSimulationMode.create();
+      const grid = createGrid(GRID_SIZE, [
+        [1, 1, 1],
+        [1, 3, 1],
+      ]);
+
+      // Act
+      const nextGrid = mode.nextGeneration(
+        createContext(grid, [createLinePlayer()], new Map()),
+      );
+
+      // Assert
+      expect(nextGrid[1][2]).toEqual(EMPTY_CELL);
     });
   });
 });

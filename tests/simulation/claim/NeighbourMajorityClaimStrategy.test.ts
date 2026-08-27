@@ -18,7 +18,7 @@ function createRecordingFallback(winner: Cell): RecordingFallback {
   return {
     calls,
     needsAllCandidates: true,
-    selectWinner(candidates: ReadonlyArray<ClaimCandidate>): Cell {
+    selectWinner(candidates: ReadonlyArray<ClaimCandidate>): number | null {
       calls.push(candidates);
       return winner;
     },
@@ -34,9 +34,22 @@ function createCandidate(id: number, rosterIndex: number): ClaimCandidate {
   };
 }
 
+/** Builds a claimed-and-alive cell for `owner`. */
+function alive(owner: number): Cell {
+  return { ownerId: owner, value: owner };
+}
+
+/** Builds an unclaimed cell. */
+const EMPTY_CELL: Cell = { ownerId: null, value: null };
+
+/** Builds a 3x3 grid of claimed-and-alive cells with the given owners. */
+function createGrid(owners: ReadonlyArray<number>): Grid {
+  return owners.map((row) => row.map((owner) => alive(owner)));
+}
+
 /** Builds a context resolving the cell at (x, y) of the given grid. */
 function createContext(grid: Grid, x: number, y: number): ClaimContext {
-  return { grid, x, y, owner: grid[y]?.[x] ?? null, generation: 0, playerCount: 4 };
+  return { grid, x, y, owner: grid[y]?.[x]?.ownerId ?? null, generation: 0, playerCount: 4 };
 }
 
 describe("NeighbourMajorityClaimStrategy", () => {
@@ -51,11 +64,11 @@ describe("NeighbourMajorityClaimStrategy", () => {
   describe("selectWinner", () => {
     it("awards the cell to the candidate owning more of its neighbours", () => {
       const strategy = NeighbourMajorityClaimStrategy.create(FirstMatchClaimStrategy.create());
-      const grid: Grid = [
-        [1, 1, null],
-        [null, null, null],
-        [null, null, 2],
-      ];
+      const grid = createGrid([
+        [1, 1, 0],
+        [0, 0, 0],
+        [0, 0, 2],
+      ]);
 
       const winner = strategy.selectWinner(
         [createCandidate(1, 0), createCandidate(2, 1)],
@@ -67,11 +80,11 @@ describe("NeighbourMajorityClaimStrategy", () => {
 
     it("beats roster order, so a later player can take the cell", () => {
       const strategy = NeighbourMajorityClaimStrategy.create(FirstMatchClaimStrategy.create());
-      const grid: Grid = [
+      const grid = createGrid([
         [2, 2, 2],
-        [null, null, 1],
-        [null, null, null],
-      ];
+        [0, 0, 1],
+        [0, 0, 0],
+      ]);
 
       const winner = strategy.selectWinner(
         [createCandidate(1, 0), createCandidate(2, 1)],
@@ -85,11 +98,11 @@ describe("NeighbourMajorityClaimStrategy", () => {
       const strategy = NeighbourMajorityClaimStrategy.create(FirstMatchClaimStrategy.create());
       // Resolving (0, 0): row 2 is its wrapped top row, so both of player 2's
       // cells are neighbours, against a single non-wrapped cell for player 1.
-      const grid: Grid = [
-        [null, 1, null],
-        [null, null, null],
-        [2, null, 2],
-      ];
+      const grid = createGrid([
+        [0, 1, 0],
+        [0, 0, 0],
+        [2, 0, 2],
+      ]);
 
       const winner = strategy.selectWinner(
         [createCandidate(1, 0), createCandidate(2, 1)],
@@ -102,11 +115,11 @@ describe("NeighbourMajorityClaimStrategy", () => {
     it("ignores cells owned by players that are not candidates", () => {
       const fallback = createRecordingFallback(1);
       const strategy = NeighbourMajorityClaimStrategy.create(fallback);
-      const grid: Grid = [
+      const grid = createGrid([
         [3, 3, 3],
-        [3, null, 3],
+        [3, 0, 3],
         [3, 3, 3],
-      ];
+      ]);
 
       strategy.selectWinner(
         [createCandidate(1, 0), createCandidate(2, 1)],
@@ -119,11 +132,11 @@ describe("NeighbourMajorityClaimStrategy", () => {
     it("does not consult the fallback when one candidate leads outright", () => {
       const fallback = createRecordingFallback(2);
       const strategy = NeighbourMajorityClaimStrategy.create(fallback);
-      const grid: Grid = [
-        [1, null, null],
-        [null, null, null],
-        [null, null, null],
-      ];
+      const grid = createGrid([
+        [1, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+      ]);
 
       strategy.selectWinner(
         [createCandidate(1, 0), createCandidate(2, 1)],
@@ -136,11 +149,11 @@ describe("NeighbourMajorityClaimStrategy", () => {
     it("offers the fallback only the candidates tied on the lead", () => {
       const fallback = createRecordingFallback(2);
       const strategy = NeighbourMajorityClaimStrategy.create(fallback);
-      const grid: Grid = [
-        [1, 2, null],
-        [null, null, null],
-        [null, null, null],
-      ];
+      const grid = createGrid([
+        [1, 2, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+      ]);
 
       strategy.selectWinner(
         [createCandidate(1, 0), createCandidate(2, 1), createCandidate(3, 2)],
@@ -150,13 +163,31 @@ describe("NeighbourMajorityClaimStrategy", () => {
       expect(fallback.calls[0].map((candidate) => candidate.player.id)).toEqual([1, 2]);
     });
 
+    it("counts a dormant claimed neighbour as owned territory", () => {
+      const strategy = NeighbourMajorityClaimStrategy.create(FirstMatchClaimStrategy.create());
+      // Player 1's only neighbour is claimed but dormant (value null); player
+      // 2's single neighbour is alive. Ownership, not liveness, is counted.
+      const grid: Grid = [
+        [{ ownerId: 1, value: null }, EMPTY_CELL, EMPTY_CELL],
+        [EMPTY_CELL, EMPTY_CELL, EMPTY_CELL],
+        [EMPTY_CELL, alive(2), EMPTY_CELL],
+      ];
+
+      const winner = strategy.selectWinner(
+        [createCandidate(1, 0), createCandidate(2, 1)],
+        createContext(grid, 1, 1),
+      );
+
+      expect(winner).toBe(1);
+    });
+
     it("delegates when no candidate owns a neighbouring cell", () => {
       const strategy = NeighbourMajorityClaimStrategy.create(FirstMatchClaimStrategy.create());
-      const grid: Grid = [
-        [null, null, null],
-        [null, null, null],
-        [null, null, null],
-      ];
+      const grid = createGrid([
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+      ]);
 
       const winner = strategy.selectWinner(
         [createCandidate(1, 0), createCandidate(2, 1)],

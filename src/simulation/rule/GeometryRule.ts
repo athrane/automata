@@ -61,7 +61,7 @@ export class GeometryRule implements Rule {
       const nx = wrapCoordinate(x + xOffset, width);
       const ny = wrapCoordinate(y + yOffset, height);
 
-      const isPlayer = grid[ny][nx] === playerId;
+      const isPlayer = grid[ny][nx].value === playerId;
 
       if (isPlayer !== this.pattern[i]) {
         return false;

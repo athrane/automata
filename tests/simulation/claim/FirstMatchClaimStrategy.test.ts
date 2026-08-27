@@ -17,7 +17,14 @@ function createCandidate(
 
 /** Builds a context for a cell nothing in these tests reads beyond the owner. */
 function createContext(owner: number | null = null): ClaimContext {
-  return { grid: [[owner]], x: 0, y: 0, owner, generation: 0, playerCount: 4 };
+  return {
+    grid: [[{ ownerId: owner, value: owner }]],
+    x: 0,
+    y: 0,
+    owner,
+    generation: 0,
+    playerCount: 4,
+  };
 }
 
 describe("FirstMatchClaimStrategy", () => {

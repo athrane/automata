@@ -1,5 +1,3 @@
-import type { Cell } from "../Cell";
-
 /**
  * One axis-aligned rectangular block of a {@link RectanglesStartingPattern}, owned by a
  * single player.
@@ -20,5 +18,5 @@ export interface RectangleRegion {
   readonly height: number;
 
   /** The id of the player owning every cell inside the block, or `null` for an empty block. */
-  readonly owner: Cell;
+  readonly owner: number | null;
 }

@@ -1,4 +1,3 @@
-import type { Cell } from "../Cell";
 import type { ClaimCandidate } from "./ClaimCandidate";
 import type { ClaimContext } from "./ClaimContext";
 import type { ClaimStrategy } from "./ClaimStrategy";
@@ -49,7 +48,7 @@ export class ContestedCellVoidStrategy implements ClaimStrategy {
   public selectWinner(
     candidates: ReadonlyArray<ClaimCandidate>,
     context: ClaimContext,
-  ): Cell {
+  ): number | null {
     if (candidates.length > UNCONTESTED_CANDIDATE_COUNT) {
       return null;
     }

@@ -44,7 +44,7 @@ export class RandomClaimedCellPositioning implements StartPositioningStrategy {
     for (let y = 0; y < grid.length; y += 1) {
       const row = grid[y];
       for (let x = 0; x < row.length; x += 1) {
-        if (row[x] === playerId) {
+        if (row[x].ownerId === playerId) {
           cells.push({ x, y });
         }
       }

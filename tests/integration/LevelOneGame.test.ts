@@ -10,10 +10,10 @@ function createViableHumanRules(): SumRule[] {
   return [new SumRule([3]), new SumRule([2, 3], true)];
 }
 
-/** Counts the cells of `grid` owned by nobody. */
+/** Counts the cells of `grid` claimed by nobody. */
 function countEmptyCells(grid: Grid): number {
   return grid.reduce(
-    (total, row) => total + row.filter((cell) => cell === null).length,
+    (total, row) => total + row.filter((cell) => cell.ownerId === null).length,
     0,
   );
 }
@@ -36,7 +36,7 @@ describe("level 1 game", () => {
       // Assert
       for (let y = 0; y < BLOCK_SIZE; y += 1) {
         for (let x = 0; x < BLOCK_SIZE; x += 1) {
-          expect(grid[y][x]).toBe(1);
+          expect(grid[y][x]).toEqual({ ownerId: 1, value: 1 });
         }
       }
     });
@@ -49,8 +49,8 @@ describe("level 1 game", () => {
       const grid = simulation.getGrid();
 
       // Assert
-      expect(grid[0][BLOCK_SIZE]).toBe(2);
-      expect(grid[BLOCK_SIZE][0]).toBe(2);
+      expect(grid[0][BLOCK_SIZE]).toEqual({ ownerId: 2, value: 2 });
+      expect(grid[BLOCK_SIZE][0]).toEqual({ ownerId: 2, value: 2 });
     });
 
     it("leaves every fifth block empty", () => {
@@ -61,8 +61,8 @@ describe("level 1 game", () => {
       const grid = simulation.getGrid();
 
       // Assert
-      expect(grid[0][BLOCK_SIZE * 4]).toBeNull();
-      expect(grid[BLOCK_SIZE * 4][0]).toBeNull();
+      expect(grid[0][BLOCK_SIZE * 4].ownerId).toBeNull();
+      expect(grid[BLOCK_SIZE * 4][0].ownerId).toBeNull();
       expect(countEmptyCells(grid)).toBe(2000);
     });
 

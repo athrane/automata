@@ -109,8 +109,8 @@ describe("Simulation", () => {
     const nextGrid = simulation.run();
 
     expect(simulation.generation).toBe(1);
-    expect(nextGrid[1][1]).toBe(1);
-    expect(nextGrid[0][0]).toBeNull();
+    expect(nextGrid[1][1]).toEqual({ ownerId: 1, value: 1 });
+    expect(nextGrid[0][0]).toEqual({ ownerId: null, value: null });
   });
 
   it("combines a player's multiple rules with OR, not AND", () => {
@@ -127,7 +127,7 @@ describe("Simulation", () => {
 
     const nextGrid = simulation.run();
 
-    expect(nextGrid[1][1]).toBe(1);
+    expect(nextGrid[1][1]).toEqual({ ownerId: 1, value: 1 });
   });
 
   it("supports multiple players with different rulesets", () => {
@@ -143,7 +143,7 @@ describe("Simulation", () => {
 
     const nextGrid = simulation.run();
 
-    expect(nextGrid[1][1]).toBe(1);
+    expect(nextGrid[1][1]).toEqual({ ownerId: 1, value: 1 });
   });
 
   describe("claim strategy", () => {
@@ -159,9 +159,9 @@ describe("Simulation", () => {
 
       const nextGrid = simulation.run();
 
-      expect(nextGrid[1][1]).toBe(1);
-      expect(nextGrid[0][0]).toBe(2);
-      expect(nextGrid[2][2]).toBe(1);
+      expect(nextGrid[1][1]).toEqual({ ownerId: 1, value: 1 });
+      expect(nextGrid[0][0]).toEqual({ ownerId: 2, value: 2 });
+      expect(nextGrid[2][2]).toEqual({ ownerId: 1, value: 1 });
     });
 
     it("resolves cells through the strategy supplied in the options", () => {
@@ -180,9 +180,9 @@ describe("Simulation", () => {
 
       const nextGrid = simulation.run();
 
-      expect(nextGrid[1][1]).toBeNull();
-      expect(nextGrid[0][0]).toBe(2);
-      expect(nextGrid[2][2]).toBe(1);
+      expect(nextGrid[1][1]).toEqual({ ownerId: null, value: null });
+      expect(nextGrid[0][0]).toEqual({ ownerId: 2, value: 2 });
+      expect(nextGrid[2][2]).toEqual({ ownerId: 1, value: 1 });
     });
 
     it("offers the strategy every player that matched the cell", () => {
@@ -220,7 +220,7 @@ describe("Simulation", () => {
 
       const nextGrid = simulation.run();
 
-      expect(nextGrid[1][1]).toBe(2);
+      expect(nextGrid[1][1]).toEqual({ ownerId: 2, value: 2 });
     });
 
     it("leaves a cell empty when the strategy declines to award it", () => {
@@ -240,7 +240,7 @@ describe("Simulation", () => {
       const nextGrid = simulation.run();
 
       expect(simulation.hasLivingCells()).toBe(false);
-      expect(nextGrid[1][1]).toBeNull();
+      expect(nextGrid[1][1]).toEqual({ ownerId: null, value: null });
     });
 
     it("passes the generation being read, not the one being written", () => {
@@ -275,14 +275,14 @@ describe("Simulation", () => {
       const nextGrid = simulation.run();
 
       // Assert
-      expect(nextGrid[1][1]).toBe(1);
+      expect(nextGrid[1][1]).toEqual({ ownerId: 1, value: 1 });
     });
 
     it("adopts the grid returned by the injected mode", () => {
       // Arrange
       const mode = createRecordingMode([
-        [1, null],
-        [null, 2],
+        [{ ownerId: 1, value: 1 }, { ownerId: null, value: null }],
+        [{ ownerId: null, value: null }, { ownerId: 2, value: 2 }],
       ]);
       const simulation = Simulation.create(
         SimulationOptions.create(2, 2, createPositionedPlayers(), HiScore.create(), undefined, mode),
@@ -293,8 +293,8 @@ describe("Simulation", () => {
 
       // Assert
       expect(nextGrid).toEqual([
-        [1, null],
-        [null, 2],
+        [{ ownerId: 1, value: 1 }, { ownerId: null, value: null }],
+        [{ ownerId: null, value: null }, { ownerId: 2, value: 2 }],
       ]);
       expect(simulation.getGrid()).toEqual(nextGrid);
     });
@@ -303,8 +303,8 @@ describe("Simulation", () => {
       // Arrange
       const players = createPositionedPlayers();
       const mode = createRecordingMode([
-        [null, null],
-        [null, null],
+        [{ ownerId: null, value: null }, { ownerId: null, value: null }],
+        [{ ownerId: null, value: null }, { ownerId: null, value: null }],
       ]);
       const simulation = Simulation.create(
         SimulationOptions.create(2, 2, players, HiScore.create(), undefined, mode),
@@ -316,7 +316,7 @@ describe("Simulation", () => {
       simulation.run();
 
       // Assert
-      expect(mode.contexts[0].grid[0][0]).toBe(1);
+      expect(mode.contexts[0].grid[0][0]).toEqual({ ownerId: 1, value: 1 });
       expect(mode.contexts[0].players).toEqual(players);
       expect(mode.contexts[0].generation).toBe(0);
       expect(mode.contexts[1].generation).toBe(1);
@@ -325,8 +325,8 @@ describe("Simulation", () => {
     it("passes the player positions to the mode", () => {
       // Arrange
       const mode = createRecordingMode([
-        [null, null],
-        [null, null],
+        [{ ownerId: null, value: null }, { ownerId: null, value: null }],
+        [{ ownerId: null, value: null }, { ownerId: null, value: null }],
       ]);
       const simulation = Simulation.create(
         SimulationOptions.create(2, 2, createPositionedPlayers(), HiScore.create(), undefined, mode),
@@ -628,10 +628,10 @@ describe("Simulation", () => {
 
       const grid = simulation.getGrid();
 
-      expect(grid[0][0]).toBe(1);
-      expect(grid[0][2]).toBe(2);
-      expect(grid[2][0]).toBe(2);
-      expect(grid[2][2]).toBe(1);
+      expect(grid[0][0]).toEqual({ ownerId: 1, value: 1 });
+      expect(grid[0][2]).toEqual({ ownerId: 2, value: 2 });
+      expect(grid[2][0]).toEqual({ ownerId: 2, value: 2 });
+      expect(grid[2][2]).toEqual({ ownerId: 1, value: 1 });
     });
 
     it("overwrites cells that are already occupied", () => {
@@ -640,7 +640,7 @@ describe("Simulation", () => {
       simulation.setCell(0, 0, 9);
       simulation.applyStartingPattern(CheckerStartingPattern.create(2, [1, 2]));
 
-      expect(simulation.getGrid()[0][0]).toBe(1);
+      expect(simulation.getGrid()[0][0]).toEqual({ ownerId: 1, value: 1 });
     });
 
     it("clears cells the pattern leaves empty", () => {
@@ -649,7 +649,7 @@ describe("Simulation", () => {
       simulation.setCell(0, 0, 9);
       simulation.applyStartingPattern(CheckerStartingPattern.create(2, [null]));
 
-      expect(simulation.getGrid()[0][0]).toBeNull();
+      expect(simulation.getGrid()[0][0]).toEqual({ ownerId: null, value: null });
     });
 
     it("resets the generation counter to zero", () => {
@@ -691,8 +691,8 @@ describe("Simulation", () => {
 
       const grid = simulation.getGrid();
 
-      expect(grid[0][0]).toBe(1);
-      expect(grid[0][1]).toBe(2);
+      expect(grid[0][0]).toEqual({ ownerId: 1, value: 1 });
+      expect(grid[0][1]).toEqual({ ownerId: 2, value: 2 });
     });
 
     it("rejects a density outside the range [0, 1]", () => {

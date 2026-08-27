@@ -1,4 +1,3 @@
-import type { Cell } from "../Cell";
 import type { ClaimCandidate } from "./ClaimCandidate";
 import type { ClaimContext } from "./ClaimContext";
 import type { ClaimStrategy } from "./ClaimStrategy";
@@ -45,7 +44,7 @@ export class RotatingPriorityClaimStrategy implements ClaimStrategy {
   public selectWinner(
     candidates: ReadonlyArray<ClaimCandidate>,
     context: ClaimContext,
-  ): Cell {
+  ): number | null {
     const offset = context.generation % context.playerCount;
 
     const winner = candidates.reduce((best, candidate) =>

@@ -1,4 +1,3 @@
-import type { Cell } from "../../../src/simulation/Cell";
 import { CellClaim } from "../../../src/simulation/claim/CellClaim";
 import type { ClaimCandidate } from "../../../src/simulation/claim/ClaimCandidate";
 import type { ClaimContext } from "../../../src/simulation/claim/ClaimContext";
@@ -19,13 +18,19 @@ interface RecordingStrategy extends ClaimStrategy {
 }
 
 /** Builds a strategy that always returns the given winner and records every call. */
-function createRecordingStrategy(winner: Cell, needsAllCandidates = true): RecordingStrategy {
+function createRecordingStrategy(
+  winner: number | null,
+  needsAllCandidates = true,
+): RecordingStrategy {
   const calls: RecordedCall[] = [];
 
   return {
     calls,
     needsAllCandidates,
-    selectWinner(candidates: ReadonlyArray<ClaimCandidate>, context: ClaimContext): Cell {
+    selectWinner(
+      candidates: ReadonlyArray<ClaimCandidate>,
+      context: ClaimContext,
+    ): number | null {
       calls.push({ candidates, context });
       return winner;
     },
@@ -43,10 +48,16 @@ function createPlayer(id: number, ruleResults: boolean[]): Player {
 }
 
 /** Builds a 2x2 grid with the given owners, row-major. */
-function createGrid(owners: Cell[]): Grid {
+function createGrid(owners: ReadonlyArray<number | null>): Grid {
   return [
-    [owners[0], owners[1]],
-    [owners[2], owners[3]],
+    [
+      { ownerId: owners[0] ?? null, value: owners[0] ?? null },
+      { ownerId: owners[1] ?? null, value: owners[1] ?? null },
+    ],
+    [
+      { ownerId: owners[2] ?? null, value: owners[2] ?? null },
+      { ownerId: owners[3] ?? null, value: owners[3] ?? null },
+    ],
   ];
 }
 
@@ -166,6 +177,25 @@ describe("CellClaim", () => {
       const claim = CellClaim.create(strategy);
 
       claim.resolve(createGrid([null, null, 7, null]), 0, 1, [createPlayer(1, [true])], 0);
+
+      expect(strategy.calls[0].context.owner).toBe(7);
+    });
+
+    it("reads the owner from the persistent claim, not the current value", () => {
+      const strategy = createRecordingStrategy(1);
+      const claim = CellClaim.create(strategy);
+      const grid: Grid = [
+        [
+          { ownerId: null, value: null },
+          { ownerId: null, value: null },
+        ],
+        [
+          { ownerId: 7, value: null },
+          { ownerId: null, value: null },
+        ],
+      ];
+
+      claim.resolve(grid, 0, 1, [createPlayer(1, [true])], 0);
 
       expect(strategy.calls[0].context.owner).toBe(7);
     });

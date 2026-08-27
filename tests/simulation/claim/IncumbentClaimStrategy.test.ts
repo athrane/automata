@@ -17,7 +17,7 @@ function createRecordingFallback(winner: Cell): RecordingFallback {
   return {
     calls,
     needsAllCandidates: true,
-    selectWinner(candidates: ReadonlyArray<ClaimCandidate>): Cell {
+    selectWinner(candidates: ReadonlyArray<ClaimCandidate>): number | null {
       calls.push(candidates);
       return winner;
     },
@@ -34,8 +34,15 @@ function createCandidate(id: number, rosterIndex: number): ClaimCandidate {
 }
 
 /** Builds a context whose cell is owned by the given player. */
-function createContext(owner: Cell): ClaimContext {
-  return { grid: [[owner]], x: 0, y: 0, owner, generation: 0, playerCount: 4 };
+function createContext(owner: number | null): ClaimContext {
+  return {
+    grid: [[{ ownerId: owner, value: owner }]],
+    x: 0,
+    y: 0,
+    owner,
+    generation: 0,
+    playerCount: 4,
+  };
 }
 
 describe("IncumbentClaimStrategy", () => {

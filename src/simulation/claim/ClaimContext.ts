@@ -1,4 +1,3 @@
-import type { Cell } from "../Cell";
 import type { Grid } from "../Grid";
 
 /**
@@ -18,8 +17,8 @@ export interface ClaimContext {
   /** Y coordinate of the cell being resolved. */
   readonly y: number;
 
-  /** Owner of the cell in the generation being read, or null when empty. */
-  readonly owner: Cell;
+  /** Owner of the cell in the generation being read, or null when unclaimed. */
+  readonly owner: number | null;
 
   /** The generation being read, before the simulation advances. */
   readonly generation: number;

@@ -1,4 +1,3 @@
-import type { Cell } from "../Cell";
 import type { Grid } from "../Grid";
 import { wrapCoordinate } from "../WrapCoordinate";
 import type { ClaimCandidate } from "./ClaimCandidate";
@@ -61,7 +60,7 @@ export class NeighbourMajorityClaimStrategy implements ClaimStrategy {
   public selectWinner(
     candidates: ReadonlyArray<ClaimCandidate>,
     context: ClaimContext,
-  ): Cell {
+  ): number | null {
     const counts = candidates.map((candidate) =>
       this.countNeighbours(context, candidate.player.id),
     );
@@ -77,6 +76,9 @@ export class NeighbourMajorityClaimStrategy implements ClaimStrategy {
 
   /**
    * Counts the cells owned by a player in the 8 neighbours of the resolved cell.
+   *
+   * Ownership is read from the persistent claim, not the current value, so a
+   * dormant claimed neighbour still counts as territorial support.
    *
    * @param context - The cell being resolved and the grid it sits in.
    * @param playerId - The player whose cells are counted.
@@ -97,7 +99,7 @@ export class NeighbourMajorityClaimStrategy implements ClaimStrategy {
       const neighbourX = wrapCoordinate(context.x + xOffset, width);
       const neighbourY = wrapCoordinate(context.y + yOffset, height);
 
-      if (grid[neighbourY][neighbourX] === playerId) {
+      if (grid[neighbourY][neighbourX].ownerId === playerId) {
         count += 1;
       }
     }

@@ -16,6 +16,14 @@ const CAMERA_Z = 1;
 const DEFAULT_CELL_COLOR = 0x000000;
 
 /**
+ * Fraction of a player's own colour a dormant claimed cell is rendered at.
+ *
+ * The toned-down colour is the player's colour blended this far toward the
+ * background colour, so dormant territory reads as dimmed rather than empty.
+ */
+const TONED_DOWN_BLEND = 0.25;
+
+/**
  * Minimum number of generations that must elapse before a grid with no living
  * cells triggers the game-over callback.
  */
@@ -53,6 +61,8 @@ export class SimulationRenderer {
   /** Scratch colours reused every frame, so drawing the markers allocates nothing. */
   private readonly pulseBaseColor: THREE.Color;
   private readonly pulsePeakColor: THREE.Color;
+  /** Colour each player's dormant claimed cells render at, keyed by player id. */
+  private readonly tonedPlayerColors: Map<number, number>;
   private frameId: number | null;
   private framesPerGeneration: number;
   private frameCount: number;
@@ -79,6 +89,7 @@ export class SimulationRenderer {
     this.meshGrid = [];
     this.pulseBaseColor = new THREE.Color();
     this.pulsePeakColor = new THREE.Color(POSITION_PULSE_COLOR);
+    this.tonedPlayerColors = new Map();
     this.frameId = null;
     this.framesPerGeneration = DEFAULT_FRAMES_PER_GENERATION;
     this.frameCount = 0;
@@ -111,6 +122,16 @@ export class SimulationRenderer {
     const cellWidth = 1 - (GRID_LINE_WIDTH_PIXELS * this.simulation.width) / this.options.width;
     const cellHeight = 1 - (GRID_LINE_WIDTH_PIXELS * this.simulation.height) / this.options.height;
 
+    // Computed once per player rather than per cell per frame, matching how
+    // pulseBaseColor/pulsePeakColor are reused across frames.
+    for (const [playerId, playerColor] of this.options.playerColors) {
+      const toned = new THREE.Color(DEFAULT_CELL_COLOR).lerp(
+        new THREE.Color(playerColor),
+        TONED_DOWN_BLEND,
+      );
+      this.tonedPlayerColors.set(playerId, toned.getHex());
+    }
+
     for (let y = 0; y < this.simulation.height; y += 1) {
       this.meshGrid[y] = [];
       for (let x = 0; x < this.simulation.width; x += 1) {
@@ -128,6 +149,11 @@ export class SimulationRenderer {
    * Synchronises the Three.js scene to the current simulation grid state.
    * Updates each cell mesh colour based on the player id mapped in `playerColors`.
    *
+   * A live cell takes its value's colour. A dormant claimed cell — owned but
+   * currently valueless — takes its owner's colour toned down to
+   * {@link TONED_DOWN_BLEND} of full strength, so territory stays visible
+   * while it is not alive. An unclaimed cell takes the default colour.
+   *
    * A cell a player occupies is drawn last, pulsing between that player's
    * colour and white. A static marker in the player's own colour would be
    * invisible, since a player starts inside its own territory.
@@ -138,9 +164,11 @@ export class SimulationRenderer {
     for (let y = 0; y < this.simulation.height; y += 1) {
       for (let x = 0; x < this.simulation.width; x += 1) {
         const cell = grid[y][x];
-        const color = cell !== null
-          ? (this.options.playerColors.get(cell) ?? DEFAULT_CELL_COLOR)
-          : DEFAULT_CELL_COLOR;
+        const color = cell.value !== null
+          ? (this.options.playerColors.get(cell.value) ?? DEFAULT_CELL_COLOR)
+          : cell.ownerId !== null
+            ? (this.tonedPlayerColors.get(cell.ownerId) ?? DEFAULT_CELL_COLOR)
+            : DEFAULT_CELL_COLOR;
         (this.meshGrid[y][x].material as THREE.MeshBasicMaterial).color.setHex(color);
       }
     }

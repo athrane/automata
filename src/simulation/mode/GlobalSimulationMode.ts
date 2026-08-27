@@ -1,4 +1,3 @@
-import type { Cell } from "../Cell";
 import type { Grid } from "../Grid";
 import type { GenerationContext } from "./GenerationContext";
 import type { SimulationMode } from "./SimulationMode";
@@ -38,18 +37,19 @@ export class GlobalSimulationMode implements SimulationMode {
     const width = context.grid[0]?.length ?? 0;
 
     const nextGrid: Grid = Array.from({ length: height }, () =>
-      Array.from({ length: width }, () => null as Cell),
+      Array.from({ length: width }, () => ({ ownerId: null, value: null })),
     );
 
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
-        nextGrid[y][x] = context.cellClaim.resolve(
+        const result = context.cellClaim.resolve(
           context.grid,
           x,
           y,
           context.players,
           context.generation,
         );
+        nextGrid[y][x] = { ownerId: result, value: result };
       }
     }
 
