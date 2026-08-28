@@ -1,6 +1,6 @@
-import type { ClaimCandidate } from "../../../src/simulation/claim/ClaimCandidate";
-import type { ClaimContext } from "../../../src/simulation/claim/ClaimContext";
-import { RotatingPriorityClaimStrategy } from "../../../src/simulation/claim/RotatingPriorityClaimStrategy";
+import type { ClaimCandidate } from "../../../../src/simulation/claim/ClaimCandidate";
+import type { ClaimContext } from "../../../../src/simulation/claim/ClaimContext";
+import { RotatingPriorityClaimStrategy } from "../../../../src/simulation/claim/resolution/RotatingPriorityClaimStrategy";
 
 /** Roster size shared by these tests. */
 const PLAYER_COUNT = 4;

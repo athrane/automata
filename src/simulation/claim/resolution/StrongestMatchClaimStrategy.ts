@@ -1,6 +1,6 @@
-import type { ClaimCandidate } from "./ClaimCandidate";
-import type { ClaimContext } from "./ClaimContext";
-import type { ClaimStrategy } from "./ClaimStrategy";
+import type { CellClaimResolutionStrategy } from "./CellClaimResolutionStrategy";
+import type { ClaimCandidate } from "../ClaimCandidate";
+import type { ClaimContext } from "../ClaimContext";
 
 /**
  * Awards a contested cell to the candidate whose rules matched most often.
@@ -10,14 +10,14 @@ import type { ClaimStrategy } from "./ClaimStrategy";
  * matching rule loses to a player whose three rules all fire on the cell.
  * Candidates tied on the maximum are passed to the fallback.
  */
-export class StrongestMatchClaimStrategy implements ClaimStrategy {
+export class StrongestMatchClaimStrategy implements CellClaimResolutionStrategy {
   /** Match strength is comparative, so every match is needed. */
   public readonly needsAllCandidates = true;
 
   /** Decides cells whose strongest candidates are tied. */
-  private readonly fallback: ClaimStrategy;
+  private readonly fallback: CellClaimResolutionStrategy;
 
-  private constructor(fallback: ClaimStrategy) {
+  private constructor(fallback: CellClaimResolutionStrategy) {
     this.fallback = fallback;
   }
 
@@ -28,7 +28,7 @@ export class StrongestMatchClaimStrategy implements ClaimStrategy {
    * @returns A strategy that favours the strongest match.
    * @throws {TypeError} If no fallback is supplied.
    */
-  public static create(fallback: ClaimStrategy): StrongestMatchClaimStrategy {
+  public static create(fallback: CellClaimResolutionStrategy): StrongestMatchClaimStrategy {
     if (fallback === null || fallback === undefined) {
       throw new TypeError("fallback must be provided");
     }

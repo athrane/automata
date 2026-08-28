@@ -1,7 +1,7 @@
 import type { Grid } from "../Grid";
 
 /**
- * Everything a {@link ClaimStrategy} may read about the cell being resolved.
+ * Everything a {@link CellClaimResolutionStrategy} may read about the cell being resolved.
  *
  * The state is passed as a context object rather than as positional
  * parameters so that a strategy needing more of the surrounding state does

@@ -1,5 +1,5 @@
-import type { ClaimStrategy } from "./claim/ClaimStrategy";
-import { FirstMatchClaimStrategy } from "./claim/FirstMatchClaimStrategy";
+import type { CellClaimResolutionStrategy } from "./claim/resolution/CellClaimResolutionStrategy";
+import { FirstMatchClaimStrategy } from "./claim/resolution/FirstMatchClaimStrategy";
 import { HiScore } from "./hiscore/HiScore";
 import { GlobalSimulationMode } from "./mode/GlobalSimulationMode";
 import type { SimulationMode } from "./mode/SimulationMode";
@@ -26,7 +26,7 @@ export class SimulationOptions {
   readonly hiScore: HiScore;
 
   /** Decides which player claims a cell matched by more than one of them. */
-  readonly claimStrategy: ClaimStrategy;
+  readonly claimStrategy: CellClaimResolutionStrategy;
 
   /** Decides which cells a generation evaluates and whose rules are consulted for them. */
   readonly mode: SimulationMode;
@@ -36,7 +36,7 @@ export class SimulationOptions {
     height: number,
     players: Player[],
     hiScore: HiScore,
-    claimStrategy: ClaimStrategy,
+    claimStrategy: CellClaimResolutionStrategy,
     mode: SimulationMode,
   ) {
     this.width = width;
@@ -64,7 +64,7 @@ export class SimulationOptions {
     height?: number,
     players?: Player[],
     hiScore?: HiScore,
-    claimStrategy?: ClaimStrategy,
+    claimStrategy?: CellClaimResolutionStrategy,
     mode?: SimulationMode,
   ): SimulationOptions {
     const resolvedWidth = width ?? DEFAULT_WIDTH;

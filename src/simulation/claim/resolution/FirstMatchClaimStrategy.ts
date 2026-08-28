@@ -1,5 +1,5 @@
-import type { ClaimCandidate } from "./ClaimCandidate";
-import type { ClaimStrategy } from "./ClaimStrategy";
+import type { CellClaimResolutionStrategy } from "./CellClaimResolutionStrategy";
+import type { ClaimCandidate } from "../ClaimCandidate";
 
 /**
  * Awards a contested cell to the candidate earliest in the roster.
@@ -9,7 +9,7 @@ import type { ClaimStrategy } from "./ClaimStrategy";
  * the terminal fallback of every composing strategy, because it is total —
  * it always names a winner and never delegates.
  */
-export class FirstMatchClaimStrategy implements ClaimStrategy {
+export class FirstMatchClaimStrategy implements CellClaimResolutionStrategy {
   /** The first match settles the cell, so the later players need not be evaluated. */
   public readonly needsAllCandidates = false;
 

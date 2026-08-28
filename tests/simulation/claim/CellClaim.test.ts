@@ -1,7 +1,7 @@
 import { CellClaim } from "../../../src/simulation/claim/CellClaim";
+import type { CellClaimResolutionStrategy } from "../../../src/simulation/claim/resolution/CellClaimResolutionStrategy";
 import type { ClaimCandidate } from "../../../src/simulation/claim/ClaimCandidate";
 import type { ClaimContext } from "../../../src/simulation/claim/ClaimContext";
-import type { ClaimStrategy } from "../../../src/simulation/claim/ClaimStrategy";
 import type { Grid } from "../../../src/simulation/Grid";
 import type { Player } from "../../../src/simulation/player/Player";
 import type { Rule } from "../../../src/simulation/rule/Rule";
@@ -13,7 +13,7 @@ interface RecordedCall {
 }
 
 /** A strategy that records its arguments and returns a fixed winner. */
-interface RecordingStrategy extends ClaimStrategy {
+interface RecordingStrategy extends CellClaimResolutionStrategy {
   calls: RecordedCall[];
 }
 
@@ -64,11 +64,11 @@ function createGrid(owners: ReadonlyArray<number | null>): Grid {
 describe("CellClaim", () => {
   describe("create", () => {
     it("throws TypeError when no strategy is supplied", () => {
-      expect(() => CellClaim.create(null as unknown as ClaimStrategy)).toThrow(TypeError);
+      expect(() => CellClaim.create(null as unknown as CellClaimResolutionStrategy)).toThrow(TypeError);
     });
 
     it("throws TypeError when the strategy is undefined", () => {
-      expect(() => CellClaim.create(undefined as unknown as ClaimStrategy)).toThrow(
+      expect(() => CellClaim.create(undefined as unknown as CellClaimResolutionStrategy)).toThrow(
         "strategy must be provided",
       );
     });

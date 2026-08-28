@@ -8,7 +8,13 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ["tests/*.ts", "tests/*/*.ts", "tests/*/*/*.ts", "vite.config.ts"],
+          allowDefaultProject: [
+            "tests/*.ts",
+            "tests/*/*.ts",
+            "tests/*/*/*.ts",
+            "tests/*/*/*/*.ts",
+            "vite.config.ts",
+          ],
           defaultProject: "tsconfig.test.json",
           maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 100,
         },

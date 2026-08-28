@@ -1,5 +1,5 @@
-import type { ClaimStrategy } from "../claim/ClaimStrategy";
-import { FirstMatchClaimStrategy } from "../claim/FirstMatchClaimStrategy";
+import type { CellClaimResolutionStrategy } from "../claim/resolution/CellClaimResolutionStrategy";
+import { FirstMatchClaimStrategy } from "../claim/resolution/FirstMatchClaimStrategy";
 import type { HiScore } from "../hiscore/HiScore";
 import type { SimulationMode } from "../mode/SimulationMode";
 import type { Player } from "../player/Player";
@@ -44,7 +44,7 @@ export class Level {
   readonly startingPattern: StartingPattern;
 
   /** Decides which player claims a cell matched by more than one of them. */
-  readonly claimStrategy: ClaimStrategy;
+  readonly claimStrategy: CellClaimResolutionStrategy;
 
   private constructor(
     id: number,
@@ -53,7 +53,7 @@ export class Level {
     height: number,
     roster: LevelRoster,
     startingPattern: StartingPattern,
-    claimStrategy: ClaimStrategy,
+    claimStrategy: CellClaimResolutionStrategy,
   ) {
     this.id = id;
     this.name = name;
@@ -85,7 +85,7 @@ export class Level {
     height: number,
     roster: LevelRoster,
     startingPattern: StartingPattern,
-    claimStrategy?: ClaimStrategy,
+    claimStrategy?: CellClaimResolutionStrategy,
   ): Level {
     if (width <= 0) {
       throw new RangeError("width must be a positive number");

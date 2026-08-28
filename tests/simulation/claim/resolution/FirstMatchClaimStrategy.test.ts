@@ -1,6 +1,6 @@
-import type { ClaimCandidate } from "../../../src/simulation/claim/ClaimCandidate";
-import type { ClaimContext } from "../../../src/simulation/claim/ClaimContext";
-import { FirstMatchClaimStrategy } from "../../../src/simulation/claim/FirstMatchClaimStrategy";
+import type { ClaimCandidate } from "../../../../src/simulation/claim/ClaimCandidate";
+import type { ClaimContext } from "../../../../src/simulation/claim/ClaimContext";
+import { FirstMatchClaimStrategy } from "../../../../src/simulation/claim/resolution/FirstMatchClaimStrategy";
 
 /** Builds a candidate with the given roster position and match strength. */
 function createCandidate(

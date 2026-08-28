@@ -7,9 +7,9 @@ import {
   SimulationOptions,
 } from "../../src/simulation";
 import type { Cell } from "../../src/simulation/Cell";
+import type { CellClaimResolutionStrategy } from "../../src/simulation/claim/resolution/CellClaimResolutionStrategy";
 import type { ClaimCandidate } from "../../src/simulation/claim/ClaimCandidate";
 import type { ClaimContext } from "../../src/simulation/claim/ClaimContext";
-import type { ClaimStrategy } from "../../src/simulation/claim/ClaimStrategy";
 import type { Grid } from "../../src/simulation/Grid";
 import type { GenerationContext } from "../../src/simulation/mode/GenerationContext";
 import type { SimulationMode } from "../../src/simulation/mode/SimulationMode";
@@ -17,7 +17,7 @@ import { FirstClaimedCellPositioning } from "../../src/simulation/player/FirstCl
 import { SumRule } from "../../src/simulation/rule";
 
 /** A strategy that records its arguments and returns a fixed winner. */
-interface RecordingStrategy extends ClaimStrategy {
+interface RecordingStrategy extends CellClaimResolutionStrategy {
   candidateIds: number[][];
   generations: number[];
 }

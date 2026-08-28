@@ -1,4 +1,4 @@
-import type { ClaimStrategy } from "../claim/ClaimStrategy";
+import type { CellClaimResolutionStrategy } from "../claim/resolution/CellClaimResolutionStrategy";
 import { LEVEL_ONE } from "./LevelOne";
 import { Level } from "./Level";
 import type { StartingPattern } from "./StartingPattern";
@@ -23,7 +23,7 @@ const CUSTOM_LEVEL_ID = 0;
  */
 export function createCustomLevel(
   startingPattern: StartingPattern,
-  claimStrategy: ClaimStrategy,
+  claimStrategy: CellClaimResolutionStrategy,
 ): Level {
   return Level.create(
     CUSTOM_LEVEL_ID,

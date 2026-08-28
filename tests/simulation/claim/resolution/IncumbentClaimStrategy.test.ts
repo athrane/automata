@@ -1,12 +1,12 @@
-import type { Cell } from "../../../src/simulation/Cell";
-import type { ClaimCandidate } from "../../../src/simulation/claim/ClaimCandidate";
-import type { ClaimContext } from "../../../src/simulation/claim/ClaimContext";
-import type { ClaimStrategy } from "../../../src/simulation/claim/ClaimStrategy";
-import { FirstMatchClaimStrategy } from "../../../src/simulation/claim/FirstMatchClaimStrategy";
-import { IncumbentClaimStrategy } from "../../../src/simulation/claim/IncumbentClaimStrategy";
+import type { Cell } from "../../../../src/simulation/Cell";
+import type { CellClaimResolutionStrategy } from "../../../../src/simulation/claim/resolution/CellClaimResolutionStrategy";
+import type { ClaimCandidate } from "../../../../src/simulation/claim/ClaimCandidate";
+import type { ClaimContext } from "../../../../src/simulation/claim/ClaimContext";
+import { FirstMatchClaimStrategy } from "../../../../src/simulation/claim/resolution/FirstMatchClaimStrategy";
+import { IncumbentClaimStrategy } from "../../../../src/simulation/claim/resolution/IncumbentClaimStrategy";
 
 /** A fallback that records the candidates it was offered. */
-interface RecordingFallback extends ClaimStrategy {
+interface RecordingFallback extends CellClaimResolutionStrategy {
   calls: ReadonlyArray<ClaimCandidate>[];
 }
 
@@ -49,7 +49,7 @@ describe("IncumbentClaimStrategy", () => {
   describe("create", () => {
     it("throws TypeError when no fallback is supplied", () => {
       expect(() =>
-        IncumbentClaimStrategy.create(null as unknown as ClaimStrategy),
+        IncumbentClaimStrategy.create(null as unknown as CellClaimResolutionStrategy),
       ).toThrow(TypeError);
     });
   });

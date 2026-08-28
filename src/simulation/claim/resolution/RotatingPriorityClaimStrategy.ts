@@ -1,6 +1,6 @@
-import type { ClaimCandidate } from "./ClaimCandidate";
-import type { ClaimContext } from "./ClaimContext";
-import type { ClaimStrategy } from "./ClaimStrategy";
+import type { CellClaimResolutionStrategy } from "./CellClaimResolutionStrategy";
+import type { ClaimCandidate } from "../ClaimCandidate";
+import type { ClaimContext } from "../ClaimContext";
 
 /**
  * Awards a contested cell by a roster priority that rotates each generation.
@@ -10,7 +10,7 @@ import type { ClaimStrategy } from "./ClaimStrategy";
  * spread evenly across the roster over a run. The rotation is a total order
  * on the roster and consults no randomness, so a run stays reproducible.
  */
-export class RotatingPriorityClaimStrategy implements ClaimStrategy {
+export class RotatingPriorityClaimStrategy implements CellClaimResolutionStrategy {
   /** The prioritised roster position may match after an earlier one, so every match is needed. */
   public readonly needsAllCandidates = true;
 

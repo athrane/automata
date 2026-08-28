@@ -1,6 +1,6 @@
-import type { ClaimCandidate } from "./ClaimCandidate";
-import type { ClaimContext } from "./ClaimContext";
-import type { ClaimStrategy } from "./ClaimStrategy";
+import type { CellClaimResolutionStrategy } from "./CellClaimResolutionStrategy";
+import type { ClaimCandidate } from "../ClaimCandidate";
+import type { ClaimContext } from "../ClaimContext";
 
 /** Number of candidates above which a cell counts as contested. */
 const UNCONTESTED_CANDIDATE_COUNT = 1;
@@ -12,14 +12,14 @@ const UNCONTESTED_CANDIDATE_COUNT = 1;
  * player absorbing the other, since neither side can hold ground the other
  * also qualifies for. Uncontested cells are decided by the fallback.
  */
-export class ContestedCellVoidStrategy implements ClaimStrategy {
+export class ContestedCellVoidStrategy implements CellClaimResolutionStrategy {
   /** Whether a cell is contested cannot be known from the first match alone. */
   public readonly needsAllCandidates = true;
 
   /** Decides cells only one player matched. */
-  private readonly fallback: ClaimStrategy;
+  private readonly fallback: CellClaimResolutionStrategy;
 
-  private constructor(fallback: ClaimStrategy) {
+  private constructor(fallback: CellClaimResolutionStrategy) {
     this.fallback = fallback;
   }
 
@@ -30,7 +30,7 @@ export class ContestedCellVoidStrategy implements ClaimStrategy {
    * @returns A strategy that empties contested cells.
    * @throws {TypeError} If no fallback is supplied.
    */
-  public static create(fallback: ClaimStrategy): ContestedCellVoidStrategy {
+  public static create(fallback: CellClaimResolutionStrategy): ContestedCellVoidStrategy {
     if (fallback === null || fallback === undefined) {
       throw new TypeError("fallback must be provided");
     }

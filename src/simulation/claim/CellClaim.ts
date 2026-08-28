@@ -1,14 +1,14 @@
 import type { Grid } from "../Grid";
 import type { Player } from "../player/Player";
+import type { CellClaimResolutionStrategy } from "./resolution/CellClaimResolutionStrategy";
 import type { ClaimCandidate } from "./ClaimCandidate";
-import type { ClaimStrategy } from "./ClaimStrategy";
 
 /**
  * Resolves the owner of a single cell in the next generation.
  *
  * Resolution has two steps. This class owns the first: every player whose
  * rules match the cell becomes a {@link ClaimCandidate}. The configured
- * {@link ClaimStrategy} owns the second: picking the winner among them.
+ * {@link CellClaimResolutionStrategy} owns the second: picking the winner among them.
  *
  * Enumeration stops at the first match for a strategy that declares it does
  * not need the full list. Building the list eagerly costs the rule
@@ -24,9 +24,9 @@ import type { ClaimStrategy } from "./ClaimStrategy";
  */
 export class CellClaim {
   /** Decides the winner among the candidates. */
-  private readonly strategy: ClaimStrategy;
+  private readonly strategy: CellClaimResolutionStrategy;
 
-  private constructor(strategy: ClaimStrategy) {
+  private constructor(strategy: CellClaimResolutionStrategy) {
     this.strategy = strategy;
   }
 
@@ -37,7 +37,7 @@ export class CellClaim {
    * @returns A CellClaim that resolves cells through the given strategy.
    * @throws {TypeError} If no strategy is supplied.
    */
-  public static create(strategy: ClaimStrategy): CellClaim {
+  public static create(strategy: CellClaimResolutionStrategy): CellClaim {
     if (strategy === null || strategy === undefined) {
       throw new TypeError("strategy must be provided");
     }

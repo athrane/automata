@@ -1,8 +1,8 @@
 import { createCustomLevel } from "../../../src/simulation/level/CustomLevel";
 import { LEVEL_ONE } from "../../../src/simulation/level/LevelOne";
 import { LEVEL_TWO_STARTING_PATTERN } from "../../../src/simulation/level/LevelTwo";
-import { ContestedCellVoidStrategy } from "../../../src/simulation/claim/ContestedCellVoidStrategy";
-import { FirstMatchClaimStrategy } from "../../../src/simulation/claim/FirstMatchClaimStrategy";
+import { ContestedCellVoidStrategy } from "../../../src/simulation/claim/resolution/ContestedCellVoidStrategy";
+import { FirstMatchClaimStrategy } from "../../../src/simulation/claim/resolution/FirstMatchClaimStrategy";
 
 describe("createCustomLevel", () => {
   it("reuses Level 1's dimensions and roster", () => {

@@ -1,8 +1,8 @@
-import type { Grid } from "../Grid";
-import { wrapCoordinate } from "../WrapCoordinate";
-import type { ClaimCandidate } from "./ClaimCandidate";
-import type { ClaimContext } from "./ClaimContext";
-import type { ClaimStrategy } from "./ClaimStrategy";
+import type { Grid } from "../../Grid";
+import { wrapCoordinate } from "../../WrapCoordinate";
+import type { CellClaimResolutionStrategy } from "./CellClaimResolutionStrategy";
+import type { ClaimCandidate } from "../ClaimCandidate";
+import type { ClaimContext } from "../ClaimContext";
 
 /**
  * The 8 neighbour offsets of the Moore neighbourhood, excluding the centre cell.
@@ -21,14 +21,14 @@ const NEIGHBOR_OFFSETS: ReadonlyArray<readonly [number, number]> = [
  * wraps at every edge, matching the toroidal geometry the rules use.
  * Candidates tied on the maximum are passed to the fallback.
  */
-export class NeighbourMajorityClaimStrategy implements ClaimStrategy {
+export class NeighbourMajorityClaimStrategy implements CellClaimResolutionStrategy {
   /** Neighbourhood support is comparative, so every match is needed. */
   public readonly needsAllCandidates = true;
 
   /** Decides cells whose leading candidates hold equal neighbourhoods. */
-  private readonly fallback: ClaimStrategy;
+  private readonly fallback: CellClaimResolutionStrategy;
 
-  private constructor(fallback: ClaimStrategy) {
+  private constructor(fallback: CellClaimResolutionStrategy) {
     this.fallback = fallback;
   }
 
@@ -39,7 +39,7 @@ export class NeighbourMajorityClaimStrategy implements ClaimStrategy {
    * @returns A strategy that favours local majority ownership.
    * @throws {TypeError} If no fallback is supplied.
    */
-  public static create(fallback: ClaimStrategy): NeighbourMajorityClaimStrategy {
+  public static create(fallback: CellClaimResolutionStrategy): NeighbourMajorityClaimStrategy {
     if (fallback === null || fallback === undefined) {
       throw new TypeError("fallback must be provided");
     }

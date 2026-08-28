@@ -6,8 +6,8 @@ import type { GenerationContext } from "./GenerationContext";
  *
  * The mode owns which cells a generation evaluates and whose rules are
  * consulted for them. Making that a strategy keeps `Simulation` closed for
- * modification when a new shape of game is added, the same way `ClaimStrategy`
- * does for the per-cell decision.
+ * modification when a new shape of game is added, the same way
+ * `CellClaimResolutionStrategy` does for the per-cell decision.
  */
 export interface SimulationMode {
   /**

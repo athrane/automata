@@ -9,7 +9,7 @@ import {
   RotatingPriorityClaimStrategy,
   StrongestMatchClaimStrategy,
 } from "../../src/simulation";
-import type { ClaimStrategy, Grid } from "../../src/simulation";
+import type { CellClaimResolutionStrategy, Grid } from "../../src/simulation";
 import { SumRule } from "../../src/simulation/rule";
 
 /**
@@ -32,7 +32,7 @@ function createHumanRules(): SumRule[] {
  * The grid, the starting pattern, and every rule set are level 1's own, so
  * the claim strategy is the only thing that varies between these runs.
  */
-function createLevel(claimStrategy?: ClaimStrategy): Level {
+function createLevel(claimStrategy?: CellClaimResolutionStrategy): Level {
   return Level.create(
     LEVEL_ONE.id,
     LEVEL_ONE.name,
@@ -45,7 +45,7 @@ function createLevel(claimStrategy?: ClaimStrategy): Level {
 }
 
 /** Plays level 1 under the given strategy and returns the resulting grid. */
-function play(claimStrategy?: ClaimStrategy, generations = GENERATIONS): Grid {
+function play(claimStrategy?: CellClaimResolutionStrategy, generations = GENERATIONS): Grid {
   const simulation = createLevel(claimStrategy).createSimulation(
     createHumanRules(),
     HiScore.create(),
@@ -77,7 +77,7 @@ function countEmptyCells(grid: Grid): number {
 }
 
 /** The alternative strategies, each composed over first match. */
-const ALTERNATIVES: ReadonlyArray<readonly [string, ClaimStrategy]> = [
+const ALTERNATIVES: ReadonlyArray<readonly [string, CellClaimResolutionStrategy]> = [
   ["incumbent", IncumbentClaimStrategy.create(FirstMatchClaimStrategy.create())],
   ["strongest match", StrongestMatchClaimStrategy.create(FirstMatchClaimStrategy.create())],
   ["neighbour majority", NeighbourMajorityClaimStrategy.create(FirstMatchClaimStrategy.create())],

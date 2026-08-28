@@ -1,5 +1,5 @@
 import { CellClaim } from "../../../src/simulation/claim/CellClaim";
-import { FirstMatchClaimStrategy } from "../../../src/simulation/claim/FirstMatchClaimStrategy";
+import { FirstMatchClaimStrategy } from "../../../src/simulation/claim/resolution/FirstMatchClaimStrategy";
 import type { Cell } from "../../../src/simulation/Cell";
 import type { Grid } from "../../../src/simulation/Grid";
 import type { GenerationContext } from "../../../src/simulation/mode/GenerationContext";

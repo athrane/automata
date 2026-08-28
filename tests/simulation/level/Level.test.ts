@@ -1,5 +1,5 @@
-import { ContestedCellVoidStrategy } from "../../../src/simulation/claim/ContestedCellVoidStrategy";
-import { FirstMatchClaimStrategy } from "../../../src/simulation/claim/FirstMatchClaimStrategy";
+import { ContestedCellVoidStrategy } from "../../../src/simulation/claim/resolution/ContestedCellVoidStrategy";
+import { FirstMatchClaimStrategy } from "../../../src/simulation/claim/resolution/FirstMatchClaimStrategy";
 import { HiScore } from "../../../src/simulation/hiscore/HiScore";
 import { CheckerStartingPattern } from "../../../src/simulation/level/CheckerStartingPattern";
 import { Level } from "../../../src/simulation/level/Level";

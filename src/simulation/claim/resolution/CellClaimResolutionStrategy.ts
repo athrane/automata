@@ -1,8 +1,8 @@
-import type { ClaimCandidate } from "./ClaimCandidate";
-import type { ClaimContext } from "./ClaimContext";
+import type { ClaimCandidate } from "../ClaimCandidate";
+import type { ClaimContext } from "../ClaimContext";
 
 /** Decides which of the players matching a cell claims it in the next generation. */
-export interface ClaimStrategy {
+export interface CellClaimResolutionStrategy {
   /**
    * Whether {@link selectWinner} needs every matching player or only the first.
    *

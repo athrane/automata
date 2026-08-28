@@ -7,7 +7,7 @@ import {
   StrongestMatchClaimStrategy,
 } from '../simulation';
 
-import type { ClaimStrategy } from '../simulation';
+import type { CellClaimResolutionStrategy } from '../simulation';
 
 /** A named claim strategy that a player can select for a custom level. */
 export interface ClaimStrategyOption {
@@ -16,7 +16,7 @@ export interface ClaimStrategyOption {
   /** Short description of the game behaviour the strategy produces. */
   readonly description: string;
   /** The underlying claim strategy instance used during simulation. */
-  readonly strategy: ClaimStrategy;
+  readonly strategy: CellClaimResolutionStrategy;
 }
 
 /**
