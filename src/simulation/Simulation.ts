@@ -1,4 +1,4 @@
-import { CellClaim } from "./claim/CellClaim";
+import type { CellClaimResolutionStrategy } from "./claim/resolution/CellClaimResolutionStrategy";
 import type { Grid } from "./Grid";
 import type { HiScore } from "./hiscore/HiScore";
 import type { HiScoreEntry } from "./hiscore/HiScoreEntry";
@@ -34,8 +34,8 @@ export class Simulation {
   /** Hi-score list this simulation records completed games into. */
   private readonly hiScore: HiScore;
 
-  /** Resolves the owner of each cell in the next generation. */
-  private readonly cellClaim: CellClaim;
+  /** Decides which candidate claims a contested cell. */
+  private readonly claimStrategy: CellClaimResolutionStrategy;
 
   /** Each player's cumulative score, added to once per completed generation. */
   private readonly scores: Map<number, number>;
@@ -59,7 +59,7 @@ export class Simulation {
     this.height = options.height;
     this.players = options.players;
     this.hiScore = options.hiScore;
-    this.cellClaim = CellClaim.create(options.claimStrategy);
+    this.claimStrategy = options.claimStrategy;
     this.mode = options.mode;
     this.positions = new Map();
     this.generation = 0;
@@ -188,9 +188,9 @@ export class Simulation {
   /**
    * Advances the simulation by one generation and returns the new grid.
    *
-   * Which cells are evaluated is decided by the configured
-   * {@link SimulationMode}; who owns each of them is decided by the configured
-   * claim strategy. See {@link CellClaim}.
+   * Which cells are evaluated, and which players are eligible for each, is
+   * decided by the configured {@link SimulationMode}; who wins a contested
+   * cell is decided by the configured {@link CellClaimResolutionStrategy}.
    *
    * The generation passed to the mode is the one being read, before the
    * increment below, so a strategy that varies with the generation applies
@@ -202,7 +202,7 @@ export class Simulation {
       players: this.players,
       generation: this.generation,
       positions: this.positions,
-      cellClaim: this.cellClaim,
+      claimStrategy: this.claimStrategy,
     });
 
     this.grid = nextGrid;

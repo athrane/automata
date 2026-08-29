@@ -1,5 +1,10 @@
 export { CellClaim } from "./CellClaim";
 export {
+  GlobalRuleSetApplicationStrategy,
+  PlayerLocalRuleSetApplicationStrategy,
+} from "./application";
+export type { RuleSetApplicationStrategy } from "./application";
+export {
   ContestedCellVoidStrategy,
   FirstMatchClaimStrategy,
   IncumbentClaimStrategy,

@@ -1,19 +1,9 @@
 import type { Grid } from "../Grid";
-import { wrapCoordinate } from "../WrapCoordinate";
+import { NeighborhoodUtils } from "../NeighborhoodUtils";
 import type { Rule } from "./Rule";
 
 /** Number of neighbors surrounding a cell in the 8-direction Moore neighbourhood. */
 const NEIGHBOR_COUNT = 8;
-
-/**
- * The 8 neighbour offsets in row-major order, excluding the centre cell:
- * top-left, top, top-right, left, right, bottom-left, bottom, bottom-right.
- */
-const NEIGHBOR_OFFSETS: ReadonlyArray<readonly [number, number]> = [
-  [-1, -1], [0, -1], [1, -1],
-  [-1,  0],          [1,  0],
-  [-1,  1], [0,  1], [1,  1],
-];
 
 /**
  * A rule that matches when the 8 neighbouring cells exactly match a
@@ -56,18 +46,20 @@ export class GeometryRule implements Rule {
 
     if (width === 0 || height === 0) return !this.pattern.includes(true);
 
-    for (let i = 0; i < NEIGHBOR_COUNT; i += 1) {
-      const [xOffset, yOffset] = NEIGHBOR_OFFSETS[i];
-      const nx = wrapCoordinate(x + xOffset, width);
-      const ny = wrapCoordinate(y + yOffset, height);
+    let matches = true;
+
+    NeighborhoodUtils.forEachMooreNeighbor(width, height, x, y, (nx, ny, index) => {
+      if (!matches) {
+        return;
+      }
 
       const isPlayer = grid[ny][nx].value === playerId;
 
-      if (isPlayer !== this.pattern[i]) {
-        return false;
+      if (isPlayer !== this.pattern[index]) {
+        matches = false;
       }
-    }
+    });
 
-    return true;
+    return matches;
   }
 }

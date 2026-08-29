@@ -1,5 +1,5 @@
-import type { CellClaim } from "../claim/CellClaim";
 import type { Grid } from "../Grid";
+import type { CellClaimResolutionStrategy } from "../claim/resolution/CellClaimResolutionStrategy";
 import type { GridPosition } from "../player/GridPosition";
 import type { Player } from "../player/Player";
 
@@ -27,6 +27,13 @@ export interface GenerationContext {
    */
   readonly positions: ReadonlyMap<number, GridPosition>;
 
-  /** Resolves the owner of a single cell in the next generation. */
-  readonly cellClaim: CellClaim;
+  /**
+   * Decides which candidate claims a contested cell.
+   *
+   * A `SimulationMode` builds its own `CellClaim` from this strategy and its
+   * own fixed `RuleSetApplicationStrategy`, rather than receiving an
+   * already-assembled `CellClaim`, since which rule-set-application strategy
+   * applies is fixed per mode while claim resolution is orthogonal to it.
+   */
+  readonly claimStrategy: CellClaimResolutionStrategy;
 }

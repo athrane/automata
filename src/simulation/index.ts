@@ -3,12 +3,19 @@ export {
   CellClaim,
   ContestedCellVoidStrategy,
   FirstMatchClaimStrategy,
+  GlobalRuleSetApplicationStrategy,
   IncumbentClaimStrategy,
   NeighbourMajorityClaimStrategy,
+  PlayerLocalRuleSetApplicationStrategy,
   RotatingPriorityClaimStrategy,
   StrongestMatchClaimStrategy,
 } from "./claim";
-export type { CellClaimResolutionStrategy, ClaimCandidate, ClaimContext } from "./claim";
+export type {
+  CellClaimResolutionStrategy,
+  ClaimCandidate,
+  ClaimContext,
+  RuleSetApplicationStrategy,
+} from "./claim";
 export type { Grid } from "./Grid";
 export { HiScore } from "./hiscore";
 export type { HiScoreEntry } from "./hiscore";
@@ -25,8 +32,18 @@ export {
   RectanglesStartingPattern,
 } from "./level";
 export type { HumanPlayerSlot, LevelRoster, RectangleRegion, StartingPattern } from "./level";
-export { GlobalSimulationMode, PlayerLocalSimulationMode } from "./mode";
+export {
+  ConfigurableSimulationMode,
+  GlobalSimulationMode,
+  PlayerLocalSimulationMode,
+} from "./mode";
 export type { GenerationContext, SimulationMode } from "./mode";
+export { NeighborhoodUtils } from "./NeighborhoodUtils";
+export {
+  PlayerLocalIterationStrategy,
+  SweepAllCellsIterationStrategy,
+} from "./iteration";
+export type { IterationStrategy } from "./iteration";
 export { FirstClaimedCellPositioning, RandomClaimedCellPositioning } from "./player";
 export type { GridPosition, Player, StartPositioningStrategy } from "./player";
 export { wrapCoordinate } from "./WrapCoordinate";

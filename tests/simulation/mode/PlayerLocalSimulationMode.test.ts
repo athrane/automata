@@ -1,4 +1,3 @@
-import { CellClaim } from "../../../src/simulation/claim/CellClaim";
 import { FirstMatchClaimStrategy } from "../../../src/simulation/claim/resolution/FirstMatchClaimStrategy";
 import type { Cell } from "../../../src/simulation/Cell";
 import type { Grid } from "../../../src/simulation/Grid";
@@ -56,7 +55,7 @@ function createContext(
     players,
     generation: 0,
     positions,
-    cellClaim: CellClaim.create(FirstMatchClaimStrategy.create()),
+    claimStrategy: FirstMatchClaimStrategy.create(),
   };
 }
 

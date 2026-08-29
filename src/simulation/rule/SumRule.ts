@@ -1,5 +1,5 @@
 import type { Grid } from "../Grid";
-import { wrapCoordinate } from "../WrapCoordinate";
+import { NeighborhoodUtils } from "../NeighborhoodUtils";
 import type { Rule } from "./Rule";
 
 /**
@@ -48,22 +48,13 @@ export class SumRule implements Rule {
 
     if (width === 0 || height === 0) return this.sums.has(0);
 
-    let count = 0;
+    let count = this.includeSelf && grid[y][x].value === playerId ? 1 : 0;
 
-    for (let yOffset = -1; yOffset <= 1; yOffset += 1) {
-      for (let xOffset = -1; xOffset <= 1; xOffset += 1) {
-        if (!this.includeSelf && xOffset === 0 && yOffset === 0) {
-          continue;
-        }
-
-        const nextX = wrapCoordinate(x + xOffset, width);
-        const nextY = wrapCoordinate(y + yOffset, height);
-
-        if (grid[nextY][nextX].value === playerId) {
-          count += 1;
-        }
+    NeighborhoodUtils.forEachMooreNeighbor(width, height, x, y, (nx, ny) => {
+      if (grid[ny][nx].value === playerId) {
+        count += 1;
       }
-    }
+    });
 
     return this.sums.has(count);
   }

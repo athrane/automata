@@ -63,16 +63,114 @@ npm run preview
 
 `vite build` outputs to `dist/`. `vite preview` serves that output at `http://localhost:4173`.
 
+### Computing a generation
+
+`ConfigurableSimulationMode.nextGeneration` is the one generation loop every mode — both
+presets and any custom pairing — runs. It allocates a fresh, all-empty grid, then applies
+three strategies in order for every cell it visits:
+
+| Step | Strategy applied | What it decides |
+|------|-------------------|------------------|
+| 1. Choose the cells | `IterationStrategy.cellsToVisit` | Which `(x, y)` cells this generation evaluates at all. A cell never visited is left empty, whatever it held before. |
+| 2. Build candidates | `RuleSetApplicationStrategy.buildCandidates` | Of the roster, which players are even eligible for this cell, and — for each eligible player — whether its rules match and how strongly. Enumeration may stop early once the claim-resolution strategy has enough candidates to decide. |
+| 3. Pick a winner | `CellClaimResolutionStrategy.selectWinner` | Which candidate, if any, claims the cell's *value* this generation. Skipped entirely when step 2 found no candidates — an unmatched cell is never a decision the claim strategy gets to make. |
+| 4. Fall back to an owner | `RuleSetApplicationStrategy.resolveOwner` | Only consulted when step 3 left the cell's value null. Decides the cell's persistent *owner* independently of its value, so a mode with territorial memory (player local) can keep a claim through a generation where the owner's rules stopped matching — a *dormant* cell — while a mode with no such memory (global) reports no owner and the cell reverts to fully unclaimed. |
+
+#### Assigning a cell's owner and value
+
+The cell is then written as `{ ownerId, value }`. `value` is step 3's result — a candidate's
+id, or null when step 3 was skipped (no candidates) or declined the cell. `ownerId` is that
+same result when a candidate won it; otherwise it falls back to step 4's result instead.
+
+Owner and value therefore only diverge — decided by two different strategies — on a cell no
+candidate won. That is precisely what lets ownership persist independently of whether this
+generation's rules matched: the mechanism behind player local simulation's dormant cells (see
+"Game modes" below).
+
+Applied to the two presets:
+
+- **Global simulation** visits every cell (step 1), offers every roster player as a candidate
+  (step 2), and never falls back to an owner (step 4 always reports null) — so a cell no
+  player's rules currently match is unowned outright, with no memory of who held it before.
+- **Player local simulation** visits only owned or occupied cells (step 1), restricts step 2
+  to the cell's current owner or occupant, and falls back to that same player as the owner
+  (step 4) whenever their rules do not match this generation — turning what would otherwise be
+  an empty cell into a dormant one instead.
+
+### Available strategy implementations
+
+Each of the three strategy interfaces from the steps above has more than one implementation
+to choose from.
+
+#### Iteration strategy
+
+Decides which cells a generation evaluates at all — step 1 of "Computing a generation" above.
+
+| Implementation | Visits |
+|----------------|--------|
+| `SweepAllCellsIterationStrategy` | Every cell of the grid. Used by global simulation. |
+| `PlayerLocalIterationStrategy` | Every cell a player owns, plus every player's current position, de-duplicated. Used by player local simulation. |
+
+#### Rule-set application strategy
+
+Decides which players are eligible for a visited cell and builds candidates from their
+matching rules, and which owner to fall back to when no candidate wins — steps 2 and 4 of
+"Computing a generation" above.
+
+| Implementation | Eligibility (step 2) | Owner fallback (step 4) |
+|-----------------|------------------------|---------------------------|
+| `GlobalRuleSetApplicationStrategy` | Every roster player | Always null — a cell no player matches is fully unowned. Used by global simulation. |
+| `PlayerLocalRuleSetApplicationStrategy` | Only the cell's current owner, or its occupant when unowned | The same eligible player, even when its rules do not match — a dormant claim. Used by player local simulation. |
+
+#### Claim-resolution strategy
+
+Decides which candidate wins a cell more than one player matched — step 3 of "Computing a
+generation" above.
+
+| Implementation | Winner |
+|----------------|--------|
+| `FirstMatchClaimStrategy` | Lowest roster index. The default. |
+| `IncumbentClaimStrategy` | The current occupant, if it is still among the candidates |
+| `StrongestMatchClaimStrategy` | The candidate with the most matching rules |
+| `NeighbourMajorityClaimStrategy` | The candidate owning the most neighbouring cells |
+| `RotatingPriorityClaimStrategy` | The candidate closest to a roster priority that rotates each generation |
+| `ContestedCellVoidStrategy` | Nobody — a cell more than one candidate matched is emptied instead of awarded |
+
+See "Cell claim" below for how these compose (most take a fallback strategy for the ties they
+leave undecided) and their fuller effect on play.
+
 ### Game modes
 
-A game is played in one of two modes, chosen at the top of the game-configuration screen.
-The mode decides *which* cells a generation evaluates; the claim strategy below decides
-*who* owns each of them.
+A game is played in one of three modes: two chosen at the top of the game-configuration
+screen, and a third assembled in code from the strategies above. The mode decides *which*
+cells a generation evaluates; the claim strategy below decides *who* owns each of them.
 
 | Mode | What a generation evaluates |
 |------|-----------------------------|
 | **Global simulation** | Every cell of the grid, against every player's rules. The default, and the only mode the game had before this option existed |
 | **Player local simulation** | For each player, only the cells that player owns plus the single cell it stands on, against that player's own rules |
+| **Custom simulation** | Whatever `IterationStrategy` and `RuleSetApplicationStrategy` pairing a caller assembles in code. Not yet exposed on the game-configuration screen |
+
+#### Global simulation
+
+| Strategy | Implementation |
+|----------|-----------------|
+| `IterationStrategy` | `SweepAllCellsIterationStrategy` |
+| `RuleSetApplicationStrategy` | `GlobalRuleSetApplicationStrategy` |
+| `CellClaimResolutionStrategy` | Configurable independently of the mode — defaults to `FirstMatchClaimStrategy` (see "Cell claim" below) |
+
+The default mode, and the only one the game had before player local simulation was added.
+Every cell is always a candidate for every player, so the claim-resolution strategy (see
+"Cell claim" below) is fully in effect on every cell, every generation. A cell no player's
+rules currently match is unowned outright — there is no memory of who held it before.
+
+#### Player local simulation
+
+| Strategy | Implementation |
+|----------|-----------------|
+| `IterationStrategy` | `PlayerLocalIterationStrategy` |
+| `RuleSetApplicationStrategy` | `PlayerLocalRuleSetApplicationStrategy` |
+| `CellClaimResolutionStrategy` | Configurable independently of the mode, though it has no effect here (see below) |
 
 Player local simulation gives every player a position on the grid. Two consequences follow
 from the evaluation scope:
@@ -103,6 +201,38 @@ where each player starts:
 Both read the grid after the starting pattern has been applied, so a player always begins
 inside its own territory. `RandomClaimedCellPositioning` consults `Math.random()` once per
 player at game start, which is the one exception to the determinism guarantee below.
+
+#### Custom simulation
+
+Unlike the two presets above, custom simulation has no fixed strategy configuration: it is
+`ConfigurableSimulationMode` constructed directly from whatever `IterationStrategy` and
+`RuleSetApplicationStrategy` a caller supplies — any of the built-in implementations listed
+in "Available strategy implementations" above, or new ones written to fit. The
+claim-resolution strategy is configured the same way as for the two presets, independently
+of this choice.
+
+`GlobalSimulationMode.create()` and `PlayerLocalSimulationMode.create()` are just:
+
+```ts
+ConfigurableSimulationMode.create(
+  SweepAllCellsIterationStrategy.create(),
+  GlobalRuleSetApplicationStrategy.create(),
+);
+```
+
+and the player-local equivalent with its own pair. A custom mode is any other pairing,
+constructed the same way and passed as the `mode` argument to `SimulationOptions.create` or
+`Level.createSimulation`:
+
+```ts
+const customMode = ConfigurableSimulationMode.create(
+  myIterationStrategy,
+  myRuleSetApplicationStrategy,
+);
+```
+
+Building a custom mode is currently code-only; the game-configuration screen does not yet
+expose a "Custom" mode option.
 
 ### In-game controls
 

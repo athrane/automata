@@ -1,5 +1,6 @@
-import type { Grid } from "../Grid";
-import type { GenerationContext } from "./GenerationContext";
+import { GlobalRuleSetApplicationStrategy } from "../claim/application/GlobalRuleSetApplicationStrategy";
+import { SweepAllCellsIterationStrategy } from "../iteration/SweepAllCellsIterationStrategy";
+import { ConfigurableSimulationMode } from "./ConfigurableSimulationMode";
 import type { SimulationMode } from "./SimulationMode";
 
 /**
@@ -9,50 +10,26 @@ import type { SimulationMode } from "./SimulationMode";
  * Player positions are ignored, so a game in this mode is fully determined by
  * the starting pattern and the players' rules.
  *
+ * A named preset of {@link ConfigurableSimulationMode}, pairing
+ * {@link SweepAllCellsIterationStrategy} with {@link GlobalRuleSetApplicationStrategy}.
  * Use the static factory method {@link GlobalSimulationMode.create} to
- * construct an instance.
+ * construct a mode.
  */
-export class GlobalSimulationMode implements SimulationMode {
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class -- deliberately a static-only preset factory
+export class GlobalSimulationMode {
   private constructor() {
-    // Stateless; construction goes through create for consistency with the project's factories.
+    // Static factory only; never instantiated.
   }
 
   /**
-   * Creates a {@link GlobalSimulationMode} instance.
+   * Creates a mode that resolves every cell of the grid each generation.
    *
-   * @returns A mode that resolves every cell of the grid each generation.
+   * @returns A mode that sweeps the whole grid, offering every cell to every player.
    */
-  public static create(): GlobalSimulationMode {
-    return new GlobalSimulationMode();
-  }
-
-  /**
-   * Resolves every cell of the grid through the claim strategy.
-   *
-   * @param context - The state of the generation being read.
-   * @returns A new grid holding the owner of each cell in the next generation.
-   */
-  public nextGeneration(context: GenerationContext): Grid {
-    const height = context.grid.length;
-    const width = context.grid[0]?.length ?? 0;
-
-    const nextGrid: Grid = Array.from({ length: height }, () =>
-      Array.from({ length: width }, () => ({ ownerId: null, value: null })),
+  public static create(): SimulationMode {
+    return ConfigurableSimulationMode.create(
+      SweepAllCellsIterationStrategy.create(),
+      GlobalRuleSetApplicationStrategy.create(),
     );
-
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
-        const result = context.cellClaim.resolve(
-          context.grid,
-          x,
-          y,
-          context.players,
-          context.generation,
-        );
-        nextGrid[y][x] = { ownerId: result, value: result };
-      }
-    }
-
-    return nextGrid;
   }
 }

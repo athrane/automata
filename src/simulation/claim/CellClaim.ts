@@ -1,62 +1,68 @@
 import type { Grid } from "../Grid";
+import type { GridPosition } from "../player/GridPosition";
 import type { Player } from "../player/Player";
+import type { RuleSetApplicationStrategy } from "./application/RuleSetApplicationStrategy";
 import type { CellClaimResolutionStrategy } from "./resolution/CellClaimResolutionStrategy";
-import type { ClaimCandidate } from "./ClaimCandidate";
 
 /**
  * Resolves the owner of a single cell in the next generation.
  *
- * Resolution has two steps. This class owns the first: every player whose
- * rules match the cell becomes a {@link ClaimCandidate}. The configured
- * {@link CellClaimResolutionStrategy} owns the second: picking the winner among them.
- *
- * Enumeration stops at the first match for a strategy that declares it does
- * not need the full list. Building the list eagerly costs the rule
- * evaluations the pre-extraction generation loop skipped, which measured at
- * roughly twice the cost of a whole generation on a 100x100 grid — enough to
- * miss the renderer's frame budget at the fastest speed.
- *
- * A player's rules are combined with OR, not AND: each rule (e.g. a "born"
- * or a "survive" preset) independently makes the player a candidate, since
- * requiring every selected rule to match the same cell simultaneously is
- * almost never satisfiable and causes the grid to die out within a
- * generation or two.
+ * Resolution has two steps. The configured {@link RuleSetApplicationStrategy}
+ * owns the first: deciding which players are eligible for the cell and
+ * building a {@link ClaimCandidate} for each whose rules match. The configured
+ * {@link CellClaimResolutionStrategy} owns the second: picking the winner
+ * among them.
  */
 export class CellClaim {
-  /** Decides the winner among the candidates. */
-  private readonly strategy: CellClaimResolutionStrategy;
+  /** Decides which players are eligible for the cell and how their rules match. */
+  private readonly ruleSetApplication: RuleSetApplicationStrategy;
 
-  private constructor(strategy: CellClaimResolutionStrategy) {
-    this.strategy = strategy;
+  /** Decides the winner among the candidates. */
+  private readonly claimResolution: CellClaimResolutionStrategy;
+
+  private constructor(
+    ruleSetApplication: RuleSetApplicationStrategy,
+    claimResolution: CellClaimResolutionStrategy,
+  ) {
+    this.ruleSetApplication = ruleSetApplication;
+    this.claimResolution = claimResolution;
   }
 
   /**
    * Creates a {@link CellClaim} instance.
    *
-   * @param strategy - Decides which candidate claims a contested cell.
-   * @returns A CellClaim that resolves cells through the given strategy.
-   * @throws {TypeError} If no strategy is supplied.
+   * @param ruleSetApplication - Decides which players are eligible for a cell and builds candidates.
+   * @param claimResolution - Decides which candidate claims a contested cell.
+   * @returns A CellClaim that resolves cells through the given strategies.
+   * @throws {TypeError} If either strategy is not supplied.
    */
-  public static create(strategy: CellClaimResolutionStrategy): CellClaim {
-    if (strategy === null || strategy === undefined) {
-      throw new TypeError("strategy must be provided");
+  public static create(
+    ruleSetApplication: RuleSetApplicationStrategy,
+    claimResolution: CellClaimResolutionStrategy,
+  ): CellClaim {
+    if (ruleSetApplication === null || ruleSetApplication === undefined) {
+      throw new TypeError("ruleSetApplication must be provided");
+    }
+    if (claimResolution === null || claimResolution === undefined) {
+      throw new TypeError("claimResolution must be provided");
     }
 
-    return new CellClaim(strategy);
+    return new CellClaim(ruleSetApplication, claimResolution);
   }
 
   /**
    * Returns the value of the cell at (x, y) in the next generation.
    *
-   * The strategy is not consulted when no player matched: an unclaimed cell
-   * is empty, which is not a decision a strategy gets to make. The caller —
-   * the simulation mode — decides the cell's persistent owner; this method
-   * decides only what the cell computes to.
+   * The claim-resolution strategy is not consulted when no player is a
+   * candidate: an unclaimed cell is empty, which is not a decision a strategy
+   * gets to make. The caller — the simulation mode — decides the cell's
+   * persistent owner; this method decides only what the cell computes to.
    *
    * @param grid - The grid of the generation being read.
    * @param x - X coordinate of the cell to resolve.
    * @param y - Y coordinate of the cell to resolve.
    * @param players - The registered players, in roster order.
+   * @param positions - The cell each player occupies, keyed by player id.
    * @param generation - The generation being read, before it advances.
    * @returns The winning player's id, or null when the cell stays empty.
    */
@@ -65,38 +71,24 @@ export class CellClaim {
     x: number,
     y: number,
     players: ReadonlyArray<Player>,
+    positions: ReadonlyMap<number, GridPosition>,
     generation: number,
   ): number | null {
-    const candidates: ClaimCandidate[] = [];
-
-    for (let rosterIndex = 0; rosterIndex < players.length; rosterIndex += 1) {
-      const player = players[rosterIndex];
-      const rules = player.rules;
-      let matchedRuleCount = 0;
-
-      // Counted with an index loop rather than filter: this runs once per
-      // player per cell, and the closure and result array a callback form
-      // allocates dominate the cost of the rule evaluations themselves.
-      for (let i = 0; i < rules.length; i += 1) {
-        if (rules[i].matches(grid, x, y, player.id)) {
-          matchedRuleCount += 1;
-        }
-      }
-
-      if (matchedRuleCount > 0) {
-        candidates.push({ player, rosterIndex, matchedRuleCount });
-
-        if (!this.strategy.needsAllCandidates) {
-          break;
-        }
-      }
-    }
+    const candidates = this.ruleSetApplication.buildCandidates(
+      grid,
+      x,
+      y,
+      players,
+      positions,
+      generation,
+      this.claimResolution.needsAllCandidates,
+    );
 
     if (candidates.length === 0) {
       return null;
     }
 
-    return this.strategy.selectWinner(candidates, {
+    return this.claimResolution.selectWinner(candidates, {
       grid,
       x,
       y,

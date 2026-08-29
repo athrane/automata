@@ -1,17 +1,8 @@
 import type { Grid } from "../../Grid";
-import { wrapCoordinate } from "../../WrapCoordinate";
+import { NeighborhoodUtils } from "../../NeighborhoodUtils";
 import type { CellClaimResolutionStrategy } from "./CellClaimResolutionStrategy";
 import type { ClaimCandidate } from "../ClaimCandidate";
 import type { ClaimContext } from "../ClaimContext";
-
-/**
- * The 8 neighbour offsets of the Moore neighbourhood, excluding the centre cell.
- */
-const NEIGHBOR_OFFSETS: ReadonlyArray<readonly [number, number]> = [
-  [-1, -1], [0, -1], [1, -1],
-  [-1,  0],          [1,  0],
-  [-1,  1], [0,  1], [1,  1],
-];
 
 /**
  * Awards a contested cell to the candidate holding most of its neighbours.
@@ -95,14 +86,11 @@ export class NeighbourMajorityClaimStrategy implements CellClaimResolutionStrate
 
     let count = 0;
 
-    for (const [xOffset, yOffset] of NEIGHBOR_OFFSETS) {
-      const neighbourX = wrapCoordinate(context.x + xOffset, width);
-      const neighbourY = wrapCoordinate(context.y + yOffset, height);
-
-      if (grid[neighbourY][neighbourX].ownerId === playerId) {
+    NeighborhoodUtils.forEachMooreNeighbor(width, height, context.x, context.y, (nx, ny) => {
+      if (grid[ny][nx].ownerId === playerId) {
         count += 1;
       }
-    }
+    });
 
     return count;
   }
