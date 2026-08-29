@@ -149,7 +149,7 @@ cells a generation evaluates; the claim strategy below decides *who* owns each o
 |------|-----------------------------|
 | **Global simulation** | Every cell of the grid, against every player's rules. The default, and the only mode the game had before this option existed |
 | **Player local simulation** | For each player, only the cells that player owns plus the single cell it stands on, against that player's own rules |
-| **Custom simulation** | Whatever `IterationStrategy` and `RuleSetApplicationStrategy` pairing a caller assembles in code. Not yet exposed on the game-configuration screen |
+| **Custom simulation** | Whatever `IterationStrategy` and `RuleSetApplicationStrategy` pairing is selected, either on the game-configuration screen or assembled in code |
 
 #### Global simulation
 
@@ -231,8 +231,11 @@ const customMode = ConfigurableSimulationMode.create(
 );
 ```
 
-Building a custom mode is currently code-only; the game-configuration screen does not yet
-expose a "Custom" mode option.
+Choosing "Custom" in the **Game mode** selector reveals an **Iteration strategy** picker and
+a **Rule-set application** picker (see "Choosing a level" below for their tables); the
+selected pair is assembled into a `ConfigurableSimulationMode` when the game starts. The
+code-level `ConfigurableSimulationMode.create(...)` route above remains available for
+strategies not in either catalogue.
 
 ### In-game controls
 
@@ -369,6 +372,22 @@ pattern** (the checker from Level 1, or either rectangle layout from Level 2 and
 and a **claim strategy** (any of the six strategies below). A custom level keeps Level 1's
 grid size and roster — only the pattern and the strategy vary — so it always starts four
 participants of 100×100-cell games apart in whatever shape and contest rule the player picks.
+
+Choosing "Custom" in the **Game mode** selector instead reveals an **Iteration strategy**
+picker and a **Rule-set application** picker:
+
+| Strategy | Cells visited |
+|----------|----------------|
+| `SweepAllCellsIterationStrategy` | Every cell of the grid. Matches the default mode |
+| `PlayerLocalIterationStrategy` | Only the cells a player owns plus the cell it stands on. Needs start positions |
+
+| Strategy | Who is eligible for a visited cell |
+|----------|-------------------------------------|
+| `GlobalRuleSetApplicationStrategy` | Every player. Matches the default mode |
+| `PlayerLocalRuleSetApplicationStrategy` | Only the cell's current owner or the player standing on it |
+
+Choosing an iteration strategy that needs positions reveals the **Player positioning**
+picker described above, exactly as selecting player local simulation does.
 
 #### Cell claim
 

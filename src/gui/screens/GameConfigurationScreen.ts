@@ -1,13 +1,16 @@
 import { AVAILABLE_CLAIM_STRATEGIES } from '../AvailableClaimStrategies';
+import { AVAILABLE_ITERATION_STRATEGIES } from '../AvailableIterationStrategies';
 import { AVAILABLE_LEVELS } from '../AvailableLevels';
 import { AVAILABLE_RULE_PRESETS } from '../AvailableRulePresets';
+import { AVAILABLE_RULE_SET_APPLICATIONS } from '../AvailableRuleSetApplications';
 import { AVAILABLE_SIMULATION_MODES } from '../AvailableSimulationModes';
 import { AVAILABLE_STARTING_PATTERNS } from '../AvailableStartingPatterns';
 import { AVAILABLE_START_POSITIONINGS } from '../AvailableStartPositionings';
+import { requiresStartPositioning, resolveSimulationMode } from '../CustomSimulationModeSelection';
 import { selectRandomPresetIndices } from '../RandomRulePresetSelection';
 import { createCustomLevel } from '../../simulation';
 
-import type { Level, StartPositioningStrategy } from '../../simulation';
+import type { Level, SimulationMode, StartPositioningStrategy } from '../../simulation';
 import type { GameConfiguration } from '../GameConfiguration';
 
 /** Number of rules the player must select before the game can start. */
@@ -15,6 +18,9 @@ const REQUIRED_RULE_COUNT = 3;
 
 /** Value of the level `<select>`'s option that switches on the custom-level controls. */
 const CUSTOM_LEVEL_OPTION_VALUE = 'custom';
+
+/** Value of the mode `<select>`'s option that switches on the custom-mode controls. */
+const CUSTOM_MODE_OPTION_VALUE = 'custom';
 
 /**
  * Renders the game-configuration screen as a full-page DOM overlay.
@@ -41,6 +47,9 @@ export class GameConfigurationScreen {
   private selectedClaimStrategyIndex: number;
   private selectedModeIndex: number;
   private selectedStartPositioningIndex: number;
+  private isCustomModeSelected: boolean;
+  private selectedIterationStrategyIndex: number;
+  private selectedRuleSetApplicationIndex: number;
 
   private constructor(
     container: HTMLElement,
@@ -56,6 +65,9 @@ export class GameConfigurationScreen {
     this.selectedClaimStrategyIndex = 0;
     this.selectedModeIndex = 0;
     this.selectedStartPositioningIndex = 0;
+    this.isCustomModeSelected = false;
+    this.selectedIterationStrategyIndex = 0;
+    this.selectedRuleSetApplicationIndex = 0;
   }
 
   /**
@@ -81,6 +93,9 @@ export class GameConfigurationScreen {
     this.selectedClaimStrategyIndex = 0;
     this.selectedModeIndex = 0;
     this.selectedStartPositioningIndex = 0;
+    this.isCustomModeSelected = false;
+    this.selectedIterationStrategyIndex = 0;
+    this.selectedRuleSetApplicationIndex = 0;
 
     const root = document.createElement('div');
     root.style.cssText =
@@ -156,7 +171,7 @@ export class GameConfigurationScreen {
       this.onStartGame({
         level: this.resolveSelectedLevel(),
         presets: selected,
-        mode: AVAILABLE_SIMULATION_MODES[this.selectedModeIndex].mode,
+        mode: this.resolveSelectedMode(),
         startPositioning: this.resolveSelectedStartPositioning(),
       });
     });
@@ -190,10 +205,10 @@ export class GameConfigurationScreen {
   }
 
   /**
-   * Builds the "Game mode" select and the player-positioning picker it reveals,
-   * and appends both to `root`.
+   * Builds the "Game mode" select, the custom-mode controls it can reveal, and
+   * the player-positioning picker, appending all three to `root`.
    *
-   * The positioning picker is shown only while the selected mode needs
+   * The positioning picker is shown only while the effective mode needs
    * positions, using the same `style.display` toggle as the custom-level
    * controls.
    */
@@ -212,19 +227,68 @@ export class GameConfigurationScreen {
       }),
     );
 
-    const modeSelect = this.buildOptionSelect(
-      'Game mode:',
-      AVAILABLE_SIMULATION_MODES,
-      (index) => {
-        this.selectedModeIndex = index;
-        positioningControls.style.display =
-          AVAILABLE_SIMULATION_MODES[index].requiresStartPositioning ? 'flex' : 'none';
-      },
-    );
-    modeSelect.style.cssText = 'margin-bottom:1rem;';
+    const updatePositioningVisibility = (): void => {
+      positioningControls.style.display = this.resolveRequiresStartPositioning() ? 'flex' : 'none';
+    };
+
+    const modeSelect = document.createElement('select');
+    modeSelect.style.cssText = 'padding:0.4rem;font-size:1rem;margin-bottom:1rem;';
+
+    for (let i = 0; i < AVAILABLE_SIMULATION_MODES.length; i += 1) {
+      const option = document.createElement('option');
+      option.value = String(i);
+      option.textContent = AVAILABLE_SIMULATION_MODES[i].name;
+      modeSelect.appendChild(option);
+    }
+
+    const customOption = document.createElement('option');
+    customOption.value = CUSTOM_MODE_OPTION_VALUE;
+    customOption.textContent = 'Custom';
+    modeSelect.appendChild(customOption);
 
     root.appendChild(modeSelect);
+
+    const customModeControls = this.buildCustomModeControls(updatePositioningVisibility);
+    root.appendChild(customModeControls);
     root.appendChild(positioningControls);
+
+    modeSelect.addEventListener('change', () => {
+      if (modeSelect.value === CUSTOM_MODE_OPTION_VALUE) {
+        this.isCustomModeSelected = true;
+        customModeControls.style.display = 'flex';
+      } else {
+        this.isCustomModeSelected = false;
+        this.selectedModeIndex = Number(modeSelect.value);
+        customModeControls.style.display = 'none';
+      }
+      updatePositioningVisibility();
+    });
+  }
+
+  /**
+   * Builds the iteration-strategy and rule-set-application pickers for a
+   * custom simulation mode, hidden until "Custom" is chosen.
+   *
+   * @param onIterationStrategyChange - Invoked after the iteration strategy changes, to refresh positioning visibility.
+   */
+  private buildCustomModeControls(onIterationStrategyChange: () => void): HTMLElement {
+    const customModeControls = document.createElement('div');
+    customModeControls.style.cssText =
+      'display:none;flex-direction:column;gap:0.5rem;margin-bottom:1rem;';
+
+    customModeControls.appendChild(
+      this.buildOptionSelect('Iteration strategy:', AVAILABLE_ITERATION_STRATEGIES, (index) => {
+        this.selectedIterationStrategyIndex = index;
+        onIterationStrategyChange();
+      }),
+    );
+    customModeControls.appendChild(
+      this.buildOptionSelect('Rule-set application:', AVAILABLE_RULE_SET_APPLICATIONS, (index) => {
+        this.selectedRuleSetApplicationIndex = index;
+      }),
+    );
+
+    return customModeControls;
   }
 
   /**
@@ -328,9 +392,28 @@ export class GameConfigurationScreen {
     );
   }
 
+  /** Resolves the mode to play: the selected preset, or a freshly built custom pairing. */
+  private resolveSelectedMode(): SimulationMode {
+    return resolveSimulationMode(
+      this.isCustomModeSelected,
+      this.selectedModeIndex,
+      this.selectedIterationStrategyIndex,
+      this.selectedRuleSetApplicationIndex,
+    );
+  }
+
+  /** Resolves whether the effective mode needs every player placed on the grid. */
+  private resolveRequiresStartPositioning(): boolean {
+    return requiresStartPositioning(
+      this.isCustomModeSelected,
+      this.selectedModeIndex,
+      this.selectedIterationStrategyIndex,
+    );
+  }
+
   /** Resolves the positioning strategy to play with, or null for a mode without positions. */
   private resolveSelectedStartPositioning(): StartPositioningStrategy | null {
-    if (!AVAILABLE_SIMULATION_MODES[this.selectedModeIndex].requiresStartPositioning) {
+    if (!this.resolveRequiresStartPositioning()) {
       return null;
     }
 

@@ -1,8 +1,13 @@
+export { AVAILABLE_ITERATION_STRATEGIES } from "./AvailableIterationStrategies";
+export type { IterationStrategyOption } from "./AvailableIterationStrategies";
 export { AVAILABLE_RULE_PRESETS } from "./AvailableRulePresets";
+export { AVAILABLE_RULE_SET_APPLICATIONS } from "./AvailableRuleSetApplications";
+export type { RuleSetApplicationOption } from "./AvailableRuleSetApplications";
 export { AVAILABLE_SIMULATION_MODES } from "./AvailableSimulationModes";
 export type { SimulationModeOption } from "./AvailableSimulationModes";
 export { AVAILABLE_START_POSITIONINGS } from "./AvailableStartPositionings";
 export type { StartPositioningOption } from "./AvailableStartPositionings";
+export { resolveSimulationMode, requiresStartPositioning } from "./CustomSimulationModeSelection";
 export type { GameConfiguration } from "./GameConfiguration";
 export { GameController } from "./GameController";
 export { GuiOptions } from "./GuiOptions";
