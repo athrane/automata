@@ -1,4 +1,4 @@
-import { GlobalRuleSetApplicationStrategy } from "../../../../src/simulation/claim/application/GlobalRuleSetApplicationStrategy";
+import { UnrestrictedRuleSetApplicationStrategy } from "../../../../src/simulation/claim/application/UnrestrictedRuleSetApplicationStrategy";
 import type { Grid } from "../../../../src/simulation/Grid";
 import type { GridPosition } from "../../../../src/simulation/player/GridPosition";
 import type { Player } from "../../../../src/simulation/player/Player";
@@ -20,10 +20,10 @@ const GRID: Grid = [[{ ownerId: null, value: null }]];
 /** No player occupies any cell in these tests. */
 const NO_POSITIONS: ReadonlyMap<number, GridPosition> = new Map();
 
-describe("GlobalRuleSetApplicationStrategy", () => {
+describe("UnrestrictedRuleSetApplicationStrategy", () => {
   describe("buildCandidates", () => {
     it("offers every matching player as a candidate, in roster order", () => {
-      const strategy = GlobalRuleSetApplicationStrategy.create();
+      const strategy = UnrestrictedRuleSetApplicationStrategy.create();
       const players = [createPlayer(1, [true]), createPlayer(2, [true]), createPlayer(3, [true])];
 
       const candidates = strategy.buildCandidates(GRID, 0, 0, players, NO_POSITIONS, 0, true);
@@ -32,7 +32,7 @@ describe("GlobalRuleSetApplicationStrategy", () => {
     });
 
     it("records the roster position of each candidate", () => {
-      const strategy = GlobalRuleSetApplicationStrategy.create();
+      const strategy = UnrestrictedRuleSetApplicationStrategy.create();
       const players = [createPlayer(1, [false]), createPlayer(2, [true]), createPlayer(3, [true])];
 
       const candidates = strategy.buildCandidates(GRID, 0, 0, players, NO_POSITIONS, 0, true);
@@ -41,7 +41,7 @@ describe("GlobalRuleSetApplicationStrategy", () => {
     });
 
     it("counts every matching rule rather than stopping at the first", () => {
-      const strategy = GlobalRuleSetApplicationStrategy.create();
+      const strategy = UnrestrictedRuleSetApplicationStrategy.create();
       const players = [createPlayer(1, [true, false, true, true])];
 
       const candidates = strategy.buildCandidates(GRID, 0, 0, players, NO_POSITIONS, 0, true);
@@ -50,7 +50,7 @@ describe("GlobalRuleSetApplicationStrategy", () => {
     });
 
     it("omits a player whose rules all fail to match", () => {
-      const strategy = GlobalRuleSetApplicationStrategy.create();
+      const strategy = UnrestrictedRuleSetApplicationStrategy.create();
       const players = [createPlayer(1, [false, false]), createPlayer(2, [true])];
 
       const candidates = strategy.buildCandidates(GRID, 0, 0, players, NO_POSITIONS, 0, true);
@@ -60,7 +60,7 @@ describe("GlobalRuleSetApplicationStrategy", () => {
     });
 
     it("omits a player that has no rules at all", () => {
-      const strategy = GlobalRuleSetApplicationStrategy.create();
+      const strategy = UnrestrictedRuleSetApplicationStrategy.create();
       const players = [createPlayer(1, []), createPlayer(2, [true])];
 
       const candidates = strategy.buildCandidates(GRID, 0, 0, players, NO_POSITIONS, 0, true);
@@ -69,7 +69,7 @@ describe("GlobalRuleSetApplicationStrategy", () => {
     });
 
     it("returns no candidates when no player matches", () => {
-      const strategy = GlobalRuleSetApplicationStrategy.create();
+      const strategy = UnrestrictedRuleSetApplicationStrategy.create();
       const players = [createPlayer(1, [false]), createPlayer(2, [false])];
 
       const candidates = strategy.buildCandidates(GRID, 0, 0, players, NO_POSITIONS, 0, true);
@@ -78,7 +78,7 @@ describe("GlobalRuleSetApplicationStrategy", () => {
     });
 
     it("returns no candidates when there are no players", () => {
-      const strategy = GlobalRuleSetApplicationStrategy.create();
+      const strategy = UnrestrictedRuleSetApplicationStrategy.create();
 
       const candidates = strategy.buildCandidates(GRID, 0, 0, [], NO_POSITIONS, 0, true);
 
@@ -86,7 +86,7 @@ describe("GlobalRuleSetApplicationStrategy", () => {
     });
 
     it("stops at the first match when needsAllCandidates is false", () => {
-      const strategy = GlobalRuleSetApplicationStrategy.create();
+      const strategy = UnrestrictedRuleSetApplicationStrategy.create();
       const players = [createPlayer(1, [true]), createPlayer(2, [true])];
 
       const candidates = strategy.buildCandidates(GRID, 0, 0, players, NO_POSITIONS, 0, false);
@@ -95,7 +95,7 @@ describe("GlobalRuleSetApplicationStrategy", () => {
     });
 
     it("skips players ahead of the first match only, not the ones before it", () => {
-      const strategy = GlobalRuleSetApplicationStrategy.create();
+      const strategy = UnrestrictedRuleSetApplicationStrategy.create();
       const players = [createPlayer(1, [false]), createPlayer(2, [true]), createPlayer(3, [true])];
 
       const candidates = strategy.buildCandidates(GRID, 0, 0, players, NO_POSITIONS, 0, false);
@@ -104,7 +104,7 @@ describe("GlobalRuleSetApplicationStrategy", () => {
     });
 
     it("still counts every rule of the player it stops at", () => {
-      const strategy = GlobalRuleSetApplicationStrategy.create();
+      const strategy = UnrestrictedRuleSetApplicationStrategy.create();
       const players = [createPlayer(1, [true, true, false])];
 
       const candidates = strategy.buildCandidates(GRID, 0, 0, players, NO_POSITIONS, 0, false);
@@ -115,7 +115,7 @@ describe("GlobalRuleSetApplicationStrategy", () => {
 
   describe("resolveOwner", () => {
     it("returns null, leaving a cell no candidate wins fully unowned", () => {
-      const strategy = GlobalRuleSetApplicationStrategy.create();
+      const strategy = UnrestrictedRuleSetApplicationStrategy.create();
       const players = [createPlayer(1, [false])];
 
       const owner = strategy.resolveOwner(GRID, 0, 0, players, NO_POSITIONS);

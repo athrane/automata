@@ -13,18 +13,18 @@ import type { RuleSetApplicationStrategy } from "./RuleSetApplicationStrategy";
  * almost never satisfiable and causes the grid to die out within a
  * generation or two.
  */
-export class GlobalRuleSetApplicationStrategy implements RuleSetApplicationStrategy {
+export class UnrestrictedRuleSetApplicationStrategy implements RuleSetApplicationStrategy {
   private constructor() {
     // Stateless; construction goes through create for consistency with the project's factories.
   }
 
   /**
-   * Creates a {@link GlobalRuleSetApplicationStrategy} instance.
+   * Creates a {@link UnrestrictedRuleSetApplicationStrategy} instance.
    *
    * @returns A strategy that considers every roster player eligible for every cell.
    */
-  public static create(): GlobalRuleSetApplicationStrategy {
-    return new GlobalRuleSetApplicationStrategy();
+  public static create(): UnrestrictedRuleSetApplicationStrategy {
+    return new UnrestrictedRuleSetApplicationStrategy();
   }
 
   /**

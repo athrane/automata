@@ -1,5 +1,5 @@
-import { PlayerLocalRuleSetApplicationStrategy } from "../claim/application/PlayerLocalRuleSetApplicationStrategy";
-import { PlayerLocalIterationStrategy } from "../iteration/PlayerLocalIterationStrategy";
+import { OwnershipEligibilityRuleSetApplicationStrategy } from "../claim/application/OwnershipEligibilityRuleSetApplicationStrategy";
+import { OwnedCellIterationStrategy } from "../iteration/OwnedCellIterationStrategy";
 import { ConfigurableSimulationMode } from "./ConfigurableSimulationMode";
 import type { SimulationMode } from "./SimulationMode";
 
@@ -19,7 +19,7 @@ import type { SimulationMode } from "./SimulationMode";
  * as an ordinary contested cell would be.
  *
  * A named preset of {@link ConfigurableSimulationMode}, pairing
- * {@link PlayerLocalIterationStrategy} with {@link PlayerLocalRuleSetApplicationStrategy}.
+ * {@link OwnedCellIterationStrategy} with {@link OwnershipEligibilityRuleSetApplicationStrategy}.
  * Use the static factory method {@link PlayerLocalSimulationMode.create} to
  * construct a mode.
  */
@@ -36,8 +36,8 @@ export class PlayerLocalSimulationMode {
    */
   public static create(): SimulationMode {
     return ConfigurableSimulationMode.create(
-      PlayerLocalIterationStrategy.create(),
-      PlayerLocalRuleSetApplicationStrategy.create(),
+      OwnedCellIterationStrategy.create(),
+      OwnershipEligibilityRuleSetApplicationStrategy.create(),
     );
   }
 }

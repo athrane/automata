@@ -1,4 +1,4 @@
-import { PlayerLocalIterationStrategy, SweepAllCellsIterationStrategy } from '../simulation';
+import { OwnedCellIterationStrategy, SweepAllCellsIterationStrategy } from '../simulation';
 
 import type { IterationStrategy } from '../simulation';
 
@@ -31,7 +31,7 @@ export const AVAILABLE_ITERATION_STRATEGIES: ReadonlyArray<IterationStrategyOpti
   {
     name: 'Owned and occupied cells',
     description: "Only the cells a player owns plus the cell it stands on are visited each generation.",
-    strategy: PlayerLocalIterationStrategy.create(),
+    strategy: OwnedCellIterationStrategy.create(),
     requiresStartPositioning: true,
   },
 ];

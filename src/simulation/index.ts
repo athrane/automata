@@ -3,12 +3,12 @@ export {
   CellClaim,
   ContestedCellVoidStrategy,
   FirstMatchClaimStrategy,
-  GlobalRuleSetApplicationStrategy,
   IncumbentClaimStrategy,
   NeighbourMajorityClaimStrategy,
-  PlayerLocalRuleSetApplicationStrategy,
+  OwnershipEligibilityRuleSetApplicationStrategy,
   RotatingPriorityClaimStrategy,
   StrongestMatchClaimStrategy,
+  UnrestrictedRuleSetApplicationStrategy,
 } from "./claim";
 export type {
   CellClaimResolutionStrategy,
@@ -40,7 +40,7 @@ export {
 export type { GenerationContext, SimulationMode } from "./mode";
 export { NeighborhoodUtils } from "./NeighborhoodUtils";
 export {
-  PlayerLocalIterationStrategy,
+  OwnedCellIterationStrategy,
   SweepAllCellsIterationStrategy,
 } from "./iteration";
 export type { IterationStrategy } from "./iteration";

@@ -1,4 +1,4 @@
-import { GlobalRuleSetApplicationStrategy, PlayerLocalRuleSetApplicationStrategy } from '../simulation';
+import { UnrestrictedRuleSetApplicationStrategy, OwnershipEligibilityRuleSetApplicationStrategy } from '../simulation';
 
 import type { RuleSetApplicationStrategy } from '../simulation';
 
@@ -25,11 +25,11 @@ export const AVAILABLE_RULE_SET_APPLICATIONS: ReadonlyArray<RuleSetApplicationOp
   {
     name: 'Every player competes',
     description: "Every player's rules are consulted for a visited cell, matching the default mode.",
-    strategy: GlobalRuleSetApplicationStrategy.create(),
+    strategy: UnrestrictedRuleSetApplicationStrategy.create(),
   },
   {
     name: 'Only the owner or occupant',
     description: 'Only the cell\'s current owner or the player standing on it is eligible.',
-    strategy: PlayerLocalRuleSetApplicationStrategy.create(),
+    strategy: OwnershipEligibilityRuleSetApplicationStrategy.create(),
   },
 ];

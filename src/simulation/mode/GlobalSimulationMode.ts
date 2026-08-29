@@ -1,4 +1,4 @@
-import { GlobalRuleSetApplicationStrategy } from "../claim/application/GlobalRuleSetApplicationStrategy";
+import { UnrestrictedRuleSetApplicationStrategy } from "../claim/application/UnrestrictedRuleSetApplicationStrategy";
 import { SweepAllCellsIterationStrategy } from "../iteration/SweepAllCellsIterationStrategy";
 import { ConfigurableSimulationMode } from "./ConfigurableSimulationMode";
 import type { SimulationMode } from "./SimulationMode";
@@ -11,7 +11,7 @@ import type { SimulationMode } from "./SimulationMode";
  * the starting pattern and the players' rules.
  *
  * A named preset of {@link ConfigurableSimulationMode}, pairing
- * {@link SweepAllCellsIterationStrategy} with {@link GlobalRuleSetApplicationStrategy}.
+ * {@link SweepAllCellsIterationStrategy} with {@link UnrestrictedRuleSetApplicationStrategy}.
  * Use the static factory method {@link GlobalSimulationMode.create} to
  * construct a mode.
  */
@@ -29,7 +29,7 @@ export class GlobalSimulationMode {
   public static create(): SimulationMode {
     return ConfigurableSimulationMode.create(
       SweepAllCellsIterationStrategy.create(),
-      GlobalRuleSetApplicationStrategy.create(),
+      UnrestrictedRuleSetApplicationStrategy.create(),
     );
   }
 }

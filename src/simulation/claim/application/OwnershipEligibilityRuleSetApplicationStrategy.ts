@@ -16,18 +16,18 @@ import type { RuleSetApplicationStrategy } from "./RuleSetApplicationStrategy";
  * configured claim-resolution strategy to break, exactly as an ordinary
  * contested cell would be.
  */
-export class PlayerLocalRuleSetApplicationStrategy implements RuleSetApplicationStrategy {
+export class OwnershipEligibilityRuleSetApplicationStrategy implements RuleSetApplicationStrategy {
   private constructor() {
     // Stateless; construction goes through create for consistency with the project's factories.
   }
 
   /**
-   * Creates a {@link PlayerLocalRuleSetApplicationStrategy} instance.
+   * Creates a {@link OwnershipEligibilityRuleSetApplicationStrategy} instance.
    *
    * @returns A strategy that restricts eligibility to a cell's owner or occupant.
    */
-  public static create(): PlayerLocalRuleSetApplicationStrategy {
-    return new PlayerLocalRuleSetApplicationStrategy();
+  public static create(): OwnershipEligibilityRuleSetApplicationStrategy {
+    return new OwnershipEligibilityRuleSetApplicationStrategy();
   }
 
   /**

@@ -1,7 +1,7 @@
 export { CellClaim } from "./CellClaim";
 export {
-  GlobalRuleSetApplicationStrategy,
-  PlayerLocalRuleSetApplicationStrategy,
+  UnrestrictedRuleSetApplicationStrategy,
+  OwnershipEligibilityRuleSetApplicationStrategy,
 } from "./application";
 export type { RuleSetApplicationStrategy } from "./application";
 export {

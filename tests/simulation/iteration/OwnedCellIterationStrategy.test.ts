@@ -1,6 +1,6 @@
 import type { CellClaimResolutionStrategy } from "../../../src/simulation/claim/resolution/CellClaimResolutionStrategy";
 import type { Grid } from "../../../src/simulation/Grid";
-import { PlayerLocalIterationStrategy } from "../../../src/simulation/iteration/PlayerLocalIterationStrategy";
+import { OwnedCellIterationStrategy } from "../../../src/simulation/iteration/OwnedCellIterationStrategy";
 import type { GenerationContext } from "../../../src/simulation/mode/GenerationContext";
 import type { GridPosition } from "../../../src/simulation/player/GridPosition";
 
@@ -37,11 +37,11 @@ function createContext(
   };
 }
 
-describe("PlayerLocalIterationStrategy", () => {
+describe("OwnedCellIterationStrategy", () => {
   describe("cellsToVisit", () => {
     it("visits every owned cell", () => {
       // Arrange
-      const strategy = PlayerLocalIterationStrategy.create();
+      const strategy = OwnedCellIterationStrategy.create();
       const grid = createGrid([
         [0, 0, 1],
         [2, 2, 1],
@@ -62,7 +62,7 @@ describe("PlayerLocalIterationStrategy", () => {
 
     it("visits a player's current position even when it owns nothing there", () => {
       // Arrange
-      const strategy = PlayerLocalIterationStrategy.create();
+      const strategy = OwnedCellIterationStrategy.create();
       const grid = createGrid([]);
       const positions = new Map<number, GridPosition>([[1, { x: 1, y: 1 }]]);
 
@@ -75,7 +75,7 @@ describe("PlayerLocalIterationStrategy", () => {
 
     it("does not visit a cell twice when it is both owned and occupied", () => {
       // Arrange
-      const strategy = PlayerLocalIterationStrategy.create();
+      const strategy = OwnedCellIterationStrategy.create();
       const grid = createGrid([[1, 1, 1]]);
       const positions = new Map<number, GridPosition>([[1, { x: 1, y: 1 }]]);
 
@@ -88,7 +88,7 @@ describe("PlayerLocalIterationStrategy", () => {
 
     it("does not visit a cell twice when two players occupy the same unowned cell", () => {
       // Arrange
-      const strategy = PlayerLocalIterationStrategy.create();
+      const strategy = OwnedCellIterationStrategy.create();
       const grid = createGrid([]);
       const positions = new Map<number, GridPosition>([
         [1, { x: 1, y: 1 }],
@@ -104,7 +104,7 @@ describe("PlayerLocalIterationStrategy", () => {
 
     it("visits nothing when the grid is empty and no player has a position", () => {
       // Arrange
-      const strategy = PlayerLocalIterationStrategy.create();
+      const strategy = OwnedCellIterationStrategy.create();
       const grid = createGrid([]);
 
       // Act

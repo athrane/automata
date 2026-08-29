@@ -109,7 +109,7 @@ Decides which cells a generation evaluates at all — step 1 of "Computing a gen
 | Implementation | Visits |
 |----------------|--------|
 | `SweepAllCellsIterationStrategy` | Every cell of the grid. Used by global simulation. |
-| `PlayerLocalIterationStrategy` | Every cell a player owns, plus every player's current position, de-duplicated. Used by player local simulation. |
+| `OwnedCellIterationStrategy` | Every cell a player owns, plus every player's current position, de-duplicated. Used by player local simulation. |
 
 #### Rule-set application strategy
 
@@ -119,8 +119,8 @@ matching rules, and which owner to fall back to when no candidate wins — steps
 
 | Implementation | Eligibility (step 2) | Owner fallback (step 4) |
 |-----------------|------------------------|---------------------------|
-| `GlobalRuleSetApplicationStrategy` | Every roster player | Always null — a cell no player matches is fully unowned. Used by global simulation. |
-| `PlayerLocalRuleSetApplicationStrategy` | Only the cell's current owner, or its occupant when unowned | The same eligible player, even when its rules do not match — a dormant claim. Used by player local simulation. |
+| `UnrestrictedRuleSetApplicationStrategy` | Every roster player | Always null — a cell no player matches is fully unowned. Used by global simulation. |
+| `OwnershipEligibilityRuleSetApplicationStrategy` | Only the cell's current owner, or its occupant when unowned | The same eligible player, even when its rules do not match — a dormant claim. Used by player local simulation. |
 
 #### Claim-resolution strategy
 
@@ -156,7 +156,7 @@ cells a generation evaluates; the claim strategy below decides *who* owns each o
 | Strategy | Implementation |
 |----------|-----------------|
 | `IterationStrategy` | `SweepAllCellsIterationStrategy` |
-| `RuleSetApplicationStrategy` | `GlobalRuleSetApplicationStrategy` |
+| `RuleSetApplicationStrategy` | `UnrestrictedRuleSetApplicationStrategy` |
 | `CellClaimResolutionStrategy` | Configurable independently of the mode — defaults to `FirstMatchClaimStrategy` (see "Cell claim" below) |
 
 The default mode, and the only one the game had before player local simulation was added.
@@ -168,8 +168,8 @@ rules currently match is unowned outright — there is no memory of who held it 
 
 | Strategy | Implementation |
 |----------|-----------------|
-| `IterationStrategy` | `PlayerLocalIterationStrategy` |
-| `RuleSetApplicationStrategy` | `PlayerLocalRuleSetApplicationStrategy` |
+| `IterationStrategy` | `OwnedCellIterationStrategy` |
+| `RuleSetApplicationStrategy` | `OwnershipEligibilityRuleSetApplicationStrategy` |
 | `CellClaimResolutionStrategy` | Configurable independently of the mode, though it has no effect here (see below) |
 
 Player local simulation gives every player a position on the grid. Two consequences follow
@@ -216,7 +216,7 @@ of this choice.
 ```ts
 ConfigurableSimulationMode.create(
   SweepAllCellsIterationStrategy.create(),
-  GlobalRuleSetApplicationStrategy.create(),
+  UnrestrictedRuleSetApplicationStrategy.create(),
 );
 ```
 
@@ -379,12 +379,12 @@ picker and a **Rule-set application** picker:
 | Strategy | Cells visited |
 |----------|----------------|
 | `SweepAllCellsIterationStrategy` | Every cell of the grid. Matches the default mode |
-| `PlayerLocalIterationStrategy` | Only the cells a player owns plus the cell it stands on. Needs start positions |
+| `OwnedCellIterationStrategy` | Only the cells a player owns plus the cell it stands on. Needs start positions |
 
 | Strategy | Who is eligible for a visited cell |
 |----------|-------------------------------------|
-| `GlobalRuleSetApplicationStrategy` | Every player. Matches the default mode |
-| `PlayerLocalRuleSetApplicationStrategy` | Only the cell's current owner or the player standing on it |
+| `UnrestrictedRuleSetApplicationStrategy` | Every player. Matches the default mode |
+| `OwnershipEligibilityRuleSetApplicationStrategy` | Only the cell's current owner or the player standing on it |
 
 Choosing an iteration strategy that needs positions reveals the **Player positioning**
 picker described above, exactly as selecting player local simulation does.

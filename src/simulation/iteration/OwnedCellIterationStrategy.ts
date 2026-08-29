@@ -11,21 +11,21 @@ import type { IterationStrategy } from "./IterationStrategy";
  * this strategy only narrows how much of the grid is touched at all, so a
  * cell neither owned nor occupied is never visited.
  *
- * Use the static factory method {@link PlayerLocalIterationStrategy.create}
+ * Use the static factory method {@link OwnedCellIterationStrategy.create}
  * to construct an instance.
  */
-export class PlayerLocalIterationStrategy implements IterationStrategy {
+export class OwnedCellIterationStrategy implements IterationStrategy {
   private constructor() {
     // Stateless; construction goes through create for consistency with the project's factories.
   }
 
   /**
-   * Creates a {@link PlayerLocalIterationStrategy} instance.
+   * Creates a {@link OwnedCellIterationStrategy} instance.
    *
    * @returns A strategy that visits only owned or occupied cells.
    */
-  public static create(): PlayerLocalIterationStrategy {
-    return new PlayerLocalIterationStrategy();
+  public static create(): OwnedCellIterationStrategy {
+    return new OwnedCellIterationStrategy();
   }
 
   /**
