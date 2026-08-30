@@ -1,3 +1,9 @@
+import { createAsciiDivider, formatBracketed } from '../design/AsciiOrnament';
+import { DESIGN_CLASS } from '../design/DesignClasses';
+
+/** Text shown at the top of the game-over overlay. */
+const GAME_OVER_TITLE = 'Game Over';
+
 /**
  * Renders the game-over overlay on top of the simulation canvas.
  *
@@ -35,19 +41,18 @@ export class GameOverScreen {
   /** Builds and appends the game-over overlay to the container. */
   public show(): void {
     const root = document.createElement('div');
-    root.style.cssText =
-      'position:fixed;inset:0;display:flex;flex-direction:column;' +
-      'align-items:center;justify-content:center;' +
-      'background:rgba(0,0,0,0.8);color:#fff;font-family:monospace;z-index:10;';
+    root.className = `${DESIGN_CLASS.SCREEN} ${DESIGN_CLASS.SCREEN_VEIL}`;
 
     const heading = document.createElement('h1');
-    heading.textContent = 'Game Over';
-    heading.style.cssText = 'font-size:3rem;margin:0 0 2rem;';
+    heading.textContent = formatBracketed(GAME_OVER_TITLE);
+    heading.className = DESIGN_CLASS.TITLE;
     root.appendChild(heading);
+
+    root.appendChild(createAsciiDivider());
 
     const button = document.createElement('button');
     button.textContent = 'Continue to title screen';
-    button.style.cssText = 'padding:0.75rem 2rem;font-size:1.2rem;cursor:pointer;';
+    button.className = DESIGN_CLASS.BUTTON;
     button.addEventListener('click', this.onContinueToTitleScreen);
     root.appendChild(button);
 

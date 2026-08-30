@@ -8,6 +8,18 @@ export type { SimulationModeOption } from "./AvailableSimulationModes";
 export { AVAILABLE_START_POSITIONINGS } from "./AvailableStartPositionings";
 export type { StartPositioningOption } from "./AvailableStartPositionings";
 export { resolveSimulationMode, requiresStartPositioning } from "./CustomSimulationModeSelection";
+export {
+  createAsciiDivider,
+  formatBracketed,
+  formatPrompted,
+  generateAutomatonRows,
+  buildDesignStyleSheet,
+  installDesignStyleSheet,
+  DEAD_CELL_CHARACTER,
+  DESIGN_CLASS,
+  DESIGN_TOKENS,
+  LIVE_CELL_CHARACTER,
+} from "./design";
 export type { GameConfiguration } from "./GameConfiguration";
 export { GameController } from "./GameController";
 export { GuiOptions } from "./GuiOptions";

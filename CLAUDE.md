@@ -12,6 +12,7 @@ Domain knowledge is packaged in `.claude/skills/`. Load a skill only when its ar
 | Skill | When to load |
 |---|---|
 | `mandatory-code-requirements` | Before writing any new TypeScript class |
+| `gui-design-program` | Before any development on the GUI (`src/gui/`) — screens, overlays, controls, styling |
 | `code-quality` | When reviewing code or before submitting a PR |
 | `solid-principles` | When performing a design review |
 | `grill-me` | When asked to grill/challenge a plan, or before implementing an ambiguous design |

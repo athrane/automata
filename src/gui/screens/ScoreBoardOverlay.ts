@@ -1,3 +1,4 @@
+import { DESIGN_CLASS } from '../design/DesignClasses';
 import type { GameParticipant } from '../GameParticipant';
 
 /** Number of hex digits in a CSS colour, used when padding the participant colour. */
@@ -41,11 +42,7 @@ export class ScoreBoardOverlay {
    */
   public show(participants: ReadonlyArray<GameParticipant>): void {
     const root = document.createElement('div');
-    root.style.cssText =
-      'position:fixed;top:1rem;left:50%;transform:translateX(-50%);' +
-      'display:flex;gap:1.5rem;padding:0.5rem 1rem;' +
-      'background:rgba(0,0,0,0.6);color:#fff;font-family:monospace;' +
-      'font-size:1rem;z-index:20;';
+    root.className = `${DESIGN_CLASS.BAR} ${DESIGN_CLASS.BAR_TOP}`;
 
     for (const participant of participants) {
       root.appendChild(this.createRow(participant));
@@ -84,11 +81,12 @@ export class ScoreBoardOverlay {
    */
   private createRow(participant: GameParticipant): HTMLElement {
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;';
+    row.className = DESIGN_CLASS.ROW;
 
     const swatch = document.createElement('span');
     const hex = participant.color.toString(16).padStart(HEX_COLOR_LENGTH, '0');
-    swatch.style.cssText = `width:0.75rem;height:0.75rem;background:#${hex};`;
+    swatch.className = DESIGN_CLASS.SWATCH;
+    swatch.style.background = `#${hex}`;
     row.appendChild(swatch);
 
     const name = document.createElement('span');

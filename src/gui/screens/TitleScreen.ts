@@ -1,7 +1,15 @@
 import type { HiScoreEntry } from '../../simulation';
+import { createAsciiDivider, formatBracketed, formatPrompted } from '../design/AsciiOrnament';
+import { DESIGN_CLASS } from '../design/DesignClasses';
 
 /** Display title shown at the top of the title screen. */
 const GAME_TITLE = 'Automata';
+
+/** Number of digits a hi-score rank is padded to, so every entry lines up. */
+const RANK_DIGITS = 2;
+
+/** Character width the player name is padded to in a hi-score entry. */
+const NAME_COLUMNS = 12;
 
 /**
  * Renders the title screen as a full-page DOM overlay.
@@ -45,33 +53,35 @@ export class TitleScreen {
   /** Builds and appends the title-screen overlay to the container. */
   public show(): void {
     const root = document.createElement('div');
-    root.style.cssText =
-      'position:fixed;inset:0;display:flex;flex-direction:column;' +
-      'align-items:center;justify-content:center;background:#111;' +
-      'color:#fff;font-family:monospace;z-index:10;';
+    root.className = DESIGN_CLASS.SCREEN;
 
     const title = document.createElement('h1');
-    title.textContent = GAME_TITLE;
-    title.style.cssText = 'font-size:3rem;margin:0 0 2rem;';
+    title.textContent = formatBracketed(GAME_TITLE);
+    title.className = DESIGN_CLASS.TITLE;
     root.appendChild(title);
 
+    root.appendChild(createAsciiDivider());
+
     const hiScoreHeading = document.createElement('h2');
-    hiScoreHeading.textContent = 'Hi-Score';
-    hiScoreHeading.style.cssText = 'font-size:1.5rem;margin:0 0 0.75rem;';
+    hiScoreHeading.textContent = formatPrompted('Hi-Score');
+    hiScoreHeading.className = DESIGN_CLASS.HEADING;
     root.appendChild(hiScoreHeading);
 
     const list = document.createElement('ol');
-    list.style.cssText = 'list-style:decimal inside;margin:0 0 2rem;min-height:1.5rem;padding:0;';
-    for (const entry of this.hiScoreProvider()) {
+    list.className = DESIGN_CLASS.LIST;
+    const entries = this.hiScoreProvider();
+    for (let i = 0; i < entries.length; i += 1) {
       const item = document.createElement('li');
-      item.textContent = `${entry.name} — ${entry.score}`;
+      item.textContent = this.formatEntry(i, entries[i]);
       list.appendChild(item);
     }
     root.appendChild(list);
 
+    root.appendChild(createAsciiDivider());
+
     const button = document.createElement('button');
     button.textContent = 'Play game';
-    button.style.cssText = 'padding:0.75rem 2rem;font-size:1.2rem;cursor:pointer;';
+    button.className = DESIGN_CLASS.BUTTON;
     button.addEventListener('click', this.onPlayGame);
     root.appendChild(button);
 
@@ -85,5 +95,19 @@ export class TitleScreen {
       this.element.remove();
       this.element = null;
     }
+  }
+
+  /**
+   * Lays one hi-score entry out on the character grid, so ranks, names, and
+   * scores line up in columns without a table.
+   *
+   * @param index - Zero-based position of the entry in the list.
+   * @param entry - The entry to render.
+   * @returns The entry as a single padded line.
+   */
+  private formatEntry(index: number, entry: HiScoreEntry): string {
+    const rank = String(index + 1).padStart(RANK_DIGITS, '0');
+
+    return `${rank}  ${entry.name.padEnd(NAME_COLUMNS)}${String(entry.score)}`;
   }
 }

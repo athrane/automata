@@ -9,12 +9,17 @@ import { AVAILABLE_START_POSITIONINGS } from '../AvailableStartPositionings';
 import { requiresStartPositioning, resolveSimulationMode } from '../CustomSimulationModeSelection';
 import { selectRandomPresetIndices } from '../RandomRulePresetSelection';
 import { createCustomLevel } from '../../simulation';
+import { createAsciiDivider, formatBracketed, formatPrompted } from '../design/AsciiOrnament';
+import { DESIGN_CLASS } from '../design/DesignClasses';
 
 import type { Level, SimulationMode, StartPositioningStrategy } from '../../simulation';
 import type { GameConfiguration } from '../GameConfiguration';
 
 /** Number of rules the player must select before the game can start. */
 const REQUIRED_RULE_COUNT = 3;
+
+/** Heading shown at the top of the configuration screen. */
+const SCREEN_TITLE = 'Configure';
 
 /** Value of the level `<select>`'s option that switches on the custom-level controls. */
 const CUSTOM_LEVEL_OPTION_VALUE = 'custom';
@@ -98,26 +103,25 @@ export class GameConfigurationScreen {
     this.selectedRuleSetApplicationIndex = 0;
 
     const root = document.createElement('div');
-    root.style.cssText =
-      'position:fixed;inset:0;display:flex;flex-direction:column;' +
-      'align-items:center;justify-content:center;background:#111;' +
-      'color:#fff;font-family:monospace;overflow-y:auto;z-index:10;';
+    root.className = DESIGN_CLASS.SCREEN;
 
     const heading = document.createElement('h1');
-    heading.textContent = 'Configure Game';
-    heading.style.cssText = 'font-size:2rem;margin:0 0 0.5rem;';
+    heading.textContent = formatBracketed(SCREEN_TITLE);
+    heading.className = DESIGN_CLASS.TITLE;
     root.appendChild(heading);
+
+    root.appendChild(createAsciiDivider());
 
     this.buildModeControls(root);
     this.buildLevelControls(root);
 
     const instruction = document.createElement('p');
-    instruction.textContent = `Select ${REQUIRED_RULE_COUNT} simulation rules:`;
-    instruction.style.cssText = 'margin:0 0 1rem;';
+    instruction.textContent = formatPrompted(`Select ${String(REQUIRED_RULE_COUNT)} rules`);
+    instruction.className = DESIGN_CLASS.HEADING;
     root.appendChild(instruction);
 
     const ruleList = document.createElement('div');
-    ruleList.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;margin-bottom:2rem;';
+    ruleList.className = DESIGN_CLASS.STACK;
 
     const checkboxes: HTMLInputElement[] = [];
     const startButton = document.createElement('button');
@@ -125,10 +129,11 @@ export class GameConfigurationScreen {
     for (let i = 0; i < AVAILABLE_RULE_PRESETS.length; i += 1) {
       const preset = AVAILABLE_RULE_PRESETS[i];
       const row = document.createElement('label');
-      row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;cursor:pointer;';
+      row.className = DESIGN_CLASS.ROW;
 
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
+      checkbox.className = DESIGN_CLASS.CHECK;
       checkbox.dataset['presetIndex'] = String(i);
       checkbox.addEventListener('change', () => {
         this.handleCheckboxChange(i, checkbox.checked, checkboxes, startButton);
@@ -160,12 +165,14 @@ export class GameConfigurationScreen {
 
     root.appendChild(ruleList);
 
+    root.appendChild(createAsciiDivider());
+
     const buttonRow = document.createElement('div');
-    buttonRow.style.cssText = 'display:flex;gap:1rem;';
+    buttonRow.className = DESIGN_CLASS.ROW;
 
     startButton.textContent = 'Start game';
     startButton.disabled = this.selectedIndices.size !== REQUIRED_RULE_COUNT;
-    startButton.style.cssText = 'padding:0.5rem 1.5rem;font-size:1rem;cursor:pointer;';
+    startButton.className = DESIGN_CLASS.BUTTON;
     startButton.addEventListener('click', () => {
       const selected = [...this.selectedIndices].map((idx) => AVAILABLE_RULE_PRESETS[idx]);
       this.onStartGame({
@@ -179,7 +186,7 @@ export class GameConfigurationScreen {
 
     const resetButton = document.createElement('button');
     resetButton.textContent = 'Reset';
-    resetButton.style.cssText = 'padding:0.5rem 1.5rem;font-size:1rem;cursor:pointer;';
+    resetButton.className = DESIGN_CLASS.BUTTON;
     resetButton.addEventListener('click', () => {
       this.selectedIndices = new Set();
       for (const cb of checkboxes) {
@@ -214,13 +221,13 @@ export class GameConfigurationScreen {
    */
   private buildModeControls(root: HTMLElement): void {
     const modeHeading = document.createElement('p');
-    modeHeading.textContent = 'Choose a game mode:';
-    modeHeading.style.cssText = 'margin:0 0 0.5rem;';
+    modeHeading.textContent = formatPrompted('Game mode');
+    modeHeading.className = DESIGN_CLASS.HEADING;
     root.appendChild(modeHeading);
 
     const positioningControls = document.createElement('div');
-    positioningControls.style.cssText =
-      'display:none;flex-direction:column;gap:0.5rem;margin-bottom:1rem;';
+    positioningControls.className = DESIGN_CLASS.STACK;
+    positioningControls.style.display = 'none';
     positioningControls.appendChild(
       this.buildOptionSelect('Player positioning:', AVAILABLE_START_POSITIONINGS, (index) => {
         this.selectedStartPositioningIndex = index;
@@ -232,7 +239,7 @@ export class GameConfigurationScreen {
     };
 
     const modeSelect = document.createElement('select');
-    modeSelect.style.cssText = 'padding:0.4rem;font-size:1rem;margin-bottom:1rem;';
+    modeSelect.className = DESIGN_CLASS.SELECT;
 
     for (let i = 0; i < AVAILABLE_SIMULATION_MODES.length; i += 1) {
       const option = document.createElement('option');
@@ -273,8 +280,8 @@ export class GameConfigurationScreen {
    */
   private buildCustomModeControls(onIterationStrategyChange: () => void): HTMLElement {
     const customModeControls = document.createElement('div');
-    customModeControls.style.cssText =
-      'display:none;flex-direction:column;gap:0.5rem;margin-bottom:1rem;';
+    customModeControls.className = DESIGN_CLASS.STACK;
+    customModeControls.style.display = 'none';
 
     customModeControls.appendChild(
       this.buildOptionSelect('Iteration strategy:', AVAILABLE_ITERATION_STRATEGIES, (index) => {
@@ -297,12 +304,12 @@ export class GameConfigurationScreen {
    */
   private buildLevelControls(root: HTMLElement): void {
     const levelHeading = document.createElement('p');
-    levelHeading.textContent = 'Choose a level:';
-    levelHeading.style.cssText = 'margin:0 0 0.5rem;';
+    levelHeading.textContent = formatPrompted('Level');
+    levelHeading.className = DESIGN_CLASS.HEADING;
     root.appendChild(levelHeading);
 
     const levelSelect = document.createElement('select');
-    levelSelect.style.cssText = 'padding:0.4rem;font-size:1rem;margin-bottom:1rem;';
+    levelSelect.className = DESIGN_CLASS.SELECT;
 
     for (let i = 0; i < AVAILABLE_LEVELS.length; i += 1) {
       const option = document.createElement('option');
@@ -336,8 +343,8 @@ export class GameConfigurationScreen {
   /** Builds the starting-pattern and claim-strategy pickers, hidden until "Custom" is chosen. */
   private buildCustomLevelControls(): HTMLElement {
     const customControls = document.createElement('div');
-    customControls.style.cssText =
-      'display:none;flex-direction:column;gap:0.5rem;margin-bottom:1rem;';
+    customControls.className = DESIGN_CLASS.STACK;
+    customControls.style.display = 'none';
 
     customControls.appendChild(
       this.buildOptionSelect('Starting pattern:', AVAILABLE_STARTING_PATTERNS, (index) => {
@@ -361,9 +368,10 @@ export class GameConfigurationScreen {
   ): HTMLLabelElement {
     const label = document.createElement('label');
     label.textContent = labelText;
+    label.className = DESIGN_CLASS.FIELD;
 
     const select = document.createElement('select');
-    select.style.cssText = 'padding:0.4rem;font-size:1rem;margin-left:0.5rem;';
+    select.className = DESIGN_CLASS.SELECT;
 
     for (let i = 0; i < options.length; i += 1) {
       const option = document.createElement('option');

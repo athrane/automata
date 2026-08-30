@@ -1,4 +1,5 @@
 import { StateMachine } from '../state';
+import { installDesignStyleSheet } from './design/DesignStyleSheet';
 import { GameConfigurationScreen, GameOverScreen, GamePlayingScreen, TitleScreen } from './screens';
 import type { GameConfiguration } from './GameConfiguration';
 
@@ -11,6 +12,9 @@ import type { GameConfiguration } from './GameConfiguration';
  *
  * A running game can also be abandoned via the in-game "Exit" button, which
  * moves directly from `game` back to `title-screen`.
+ *
+ * Constructing a controller also installs the design programme's stylesheet,
+ * which every screen styles itself from.
  *
  * Use the static factory method {@link GameController.create} to construct an instance.
  */
@@ -25,6 +29,10 @@ export class GameController {
   private constructor(container: HTMLElement) {
     this.container = container;
     this.stateMachine = StateMachine.create('title-screen');
+
+    // Installed before any screen is built, so every screen finds the design
+    // programme's classes already defined.
+    installDesignStyleSheet();
 
     this.gamePlayingScreen = GamePlayingScreen.create(
       container,

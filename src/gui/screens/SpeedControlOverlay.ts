@@ -1,7 +1,5 @@
+import { DESIGN_CLASS } from '../design/DesignClasses';
 import type { SimulationSpeed } from '../SimulationSpeed';
-
-/** Shared styling for every button in the control bar. */
-const BUTTON_STYLE = 'padding:0.4rem 1rem;font-family:monospace;font-size:1rem;cursor:pointer;';
 
 /**
  * Renders the in-game control bar as an overlay pinned to the bottom centre of
@@ -60,16 +58,13 @@ export class SpeedControlOverlay {
    */
   public show(speed: SimulationSpeed): void {
     const root = document.createElement('div');
-    root.style.cssText =
-      'position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);' +
-      'display:flex;align-items:center;gap:1rem;padding:0.5rem 1rem;' +
-      'background:rgba(0,0,0,0.6);color:#fff;font-family:monospace;z-index:20;';
+    root.className = `${DESIGN_CLASS.BAR} ${DESIGN_CLASS.BAR_BOTTOM}`;
 
     this.slowDownButton = this.createButton('Slow down', this.onSlowDown);
     root.appendChild(this.slowDownButton);
 
     this.readout = document.createElement('span');
-    this.readout.style.cssText = 'min-width:8rem;text-align:center;';
+    this.readout.className = DESIGN_CLASS.READOUT;
     root.appendChild(this.readout);
 
     this.speedUpButton = this.createButton('Speed up', this.onSpeedUp);
@@ -120,7 +115,7 @@ export class SpeedControlOverlay {
   private createButton(label: string, onClick: () => void): HTMLButtonElement {
     const button = document.createElement('button');
     button.textContent = label;
-    button.style.cssText = BUTTON_STYLE;
+    button.className = DESIGN_CLASS.BUTTON;
     button.addEventListener('click', onClick);
 
     return button;
