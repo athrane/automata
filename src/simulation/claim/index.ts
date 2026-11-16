@@ -2,6 +2,7 @@ export { CellClaim } from "./CellClaim";
 export {
   UnrestrictedRuleSetApplicationStrategy,
   OwnershipEligibilityRuleSetApplicationStrategy,
+  PersistentValueRuleSetApplicationStrategy,
 } from "./application";
 export type { RuleSetApplicationStrategy } from "./application";
 export {

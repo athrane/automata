@@ -7,6 +7,7 @@ import { AVAILABLE_SIMULATION_MODES } from '../AvailableSimulationModes';
 import { AVAILABLE_STARTING_PATTERNS } from '../AvailableStartingPatterns';
 import { AVAILABLE_START_POSITIONINGS } from '../AvailableStartPositionings';
 import { requiresStartPositioning, resolveSimulationMode } from '../CustomSimulationModeSelection';
+import { resolveEffectiveMode, resolveEffectiveStartPositioning } from '../LevelModeSelection';
 import { selectRandomPresetIndices } from '../RandomRulePresetSelection';
 import { createCustomLevel } from '../../simulation';
 import { createAsciiDivider, formatBracketed, formatPrompted } from '../design/AsciiOrnament';
@@ -55,6 +56,8 @@ export class GameConfigurationScreen {
   private isCustomModeSelected: boolean;
   private selectedIterationStrategyIndex: number;
   private selectedRuleSetApplicationIndex: number;
+  private modeControls: HTMLElement | null;
+  private fixedModeNotice: HTMLElement | null;
 
   private constructor(
     container: HTMLElement,
@@ -73,6 +76,8 @@ export class GameConfigurationScreen {
     this.isCustomModeSelected = false;
     this.selectedIterationStrategyIndex = 0;
     this.selectedRuleSetApplicationIndex = 0;
+    this.modeControls = null;
+    this.fixedModeNotice = null;
   }
 
   /**
@@ -101,6 +106,8 @@ export class GameConfigurationScreen {
     this.isCustomModeSelected = false;
     this.selectedIterationStrategyIndex = 0;
     this.selectedRuleSetApplicationIndex = 0;
+    this.modeControls = null;
+    this.fixedModeNotice = null;
 
     const root = document.createElement('div');
     root.className = DESIGN_CLASS.SCREEN;
@@ -114,6 +121,7 @@ export class GameConfigurationScreen {
 
     this.buildModeControls(root);
     this.buildLevelControls(root);
+    this.updateFixedModeVisibility();
 
     const instruction = document.createElement('p');
     instruction.textContent = formatPrompted(`Select ${String(REQUIRED_RULE_COUNT)} rules`);
@@ -175,11 +183,15 @@ export class GameConfigurationScreen {
     startButton.className = DESIGN_CLASS.BUTTON;
     startButton.addEventListener('click', () => {
       const selected = [...this.selectedIndices].map((idx) => AVAILABLE_RULE_PRESETS[idx]);
+      const level = this.resolveSelectedLevel();
       this.onStartGame({
-        level: this.resolveSelectedLevel(),
+        level,
         presets: selected,
-        mode: this.resolveSelectedMode(),
-        startPositioning: this.resolveSelectedStartPositioning(),
+        mode: resolveEffectiveMode(level, this.resolveSelectedMode()),
+        startPositioning: resolveEffectiveStartPositioning(
+          level,
+          this.resolveSelectedStartPositioning(),
+        ),
       });
     });
     buttonRow.appendChild(startButton);
@@ -213,7 +225,9 @@ export class GameConfigurationScreen {
 
   /**
    * Builds the "Game mode" select, the custom-mode controls it can reveal, and
-   * the player-positioning picker, appending all three to `root`.
+   * the player-positioning picker, appending all three to `root` inside one
+   * block, followed by the notice shown instead of that block when the
+   * selected level fixes its own mode.
    *
    * The positioning picker is shown only while the effective mode needs
    * positions, using the same `style.display` toggle as the custom-level
@@ -224,6 +238,17 @@ export class GameConfigurationScreen {
     modeHeading.textContent = formatPrompted('Game mode');
     modeHeading.className = DESIGN_CLASS.HEADING;
     root.appendChild(modeHeading);
+
+    const modeControls = document.createElement('div');
+    modeControls.className = DESIGN_CLASS.STACK;
+    root.appendChild(modeControls);
+    this.modeControls = modeControls;
+
+    const fixedModeNotice = document.createElement('p');
+    fixedModeNotice.className = DESIGN_CLASS.TEXT;
+    fixedModeNotice.style.display = 'none';
+    root.appendChild(fixedModeNotice);
+    this.fixedModeNotice = fixedModeNotice;
 
     const positioningControls = document.createElement('div');
     positioningControls.className = DESIGN_CLASS.STACK;
@@ -253,11 +278,11 @@ export class GameConfigurationScreen {
     customOption.textContent = 'Custom';
     modeSelect.appendChild(customOption);
 
-    root.appendChild(modeSelect);
+    modeControls.appendChild(modeSelect);
 
     const customModeControls = this.buildCustomModeControls(updatePositioningVisibility);
-    root.appendChild(customModeControls);
-    root.appendChild(positioningControls);
+    modeControls.appendChild(customModeControls);
+    modeControls.appendChild(positioningControls);
 
     modeSelect.addEventListener('change', () => {
       if (modeSelect.value === CUSTOM_MODE_OPTION_VALUE) {
@@ -337,7 +362,26 @@ export class GameConfigurationScreen {
         this.selectedLevel = AVAILABLE_LEVELS[Number(levelSelect.value)];
         customControls.style.display = 'none';
       }
+      this.updateFixedModeVisibility();
     });
+  }
+
+  /**
+   * Hides the mode controls and shows the fixed-mode notice while the selected
+   * level fixes its own mode, and restores the controls for any other level.
+   */
+  private updateFixedModeVisibility(): void {
+    if (this.modeControls === null || this.fixedModeNotice === null) {
+      return;
+    }
+
+    const isModeFixed = !this.isCustomLevelSelected && this.selectedLevel.mode !== null;
+
+    this.modeControls.style.display = isModeFixed ? 'none' : 'flex';
+    this.fixedModeNotice.style.display = isModeFixed ? 'block' : 'none';
+    this.fixedModeNotice.textContent = isModeFixed
+      ? `${this.selectedLevel.name} always plays in its own game mode.`
+      : '';
   }
 
   /** Builds the starting-pattern and claim-strategy pickers, hidden until "Custom" is chosen. */

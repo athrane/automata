@@ -1,15 +1,20 @@
 import { AVAILABLE_SIMULATION_MODES } from "../../src/gui/AvailableSimulationModes";
 
 describe("AVAILABLE_SIMULATION_MODES", () => {
-  it("lists both simulation modes", () => {
-    expect(AVAILABLE_SIMULATION_MODES).toHaveLength(2);
+  it("lists every simulation mode", () => {
+    expect(AVAILABLE_SIMULATION_MODES).toHaveLength(3);
   });
 
   it("lists the modes by display name", () => {
     expect(AVAILABLE_SIMULATION_MODES.map((option) => option.name)).toEqual([
       "Global simulation",
       "Player local simulation",
+      "Conversion simulation",
     ]);
+  });
+
+  it("marks conversion simulation as not needing start positions", () => {
+    expect(AVAILABLE_SIMULATION_MODES[2].requiresStartPositioning).toBe(false);
   });
 
   it("offers the mode every game used before modes were selectable first", () => {

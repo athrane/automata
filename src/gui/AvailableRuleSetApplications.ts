@@ -1,4 +1,8 @@
-import { UnrestrictedRuleSetApplicationStrategy, OwnershipEligibilityRuleSetApplicationStrategy } from '../simulation';
+import {
+  UnrestrictedRuleSetApplicationStrategy,
+  OwnershipEligibilityRuleSetApplicationStrategy,
+  PersistentValueRuleSetApplicationStrategy,
+} from '../simulation';
 
 import type { RuleSetApplicationStrategy } from '../simulation';
 
@@ -31,5 +35,10 @@ export const AVAILABLE_RULE_SET_APPLICATIONS: ReadonlyArray<RuleSetApplicationOp
     name: 'Only the owner or occupant',
     description: 'Only the cell\'s current owner or the player standing on it is eligible.',
     strategy: OwnershipEligibilityRuleSetApplicationStrategy.create(),
+  },
+  {
+    name: 'Cells keep their value',
+    description: "Every player's rules are consulted, and a cell no rule matches keeps its current value instead of going empty.",
+    strategy: PersistentValueRuleSetApplicationStrategy.create(UnrestrictedRuleSetApplicationStrategy.create()),
   },
 ];

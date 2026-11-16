@@ -46,6 +46,14 @@ export class Level {
   /** Decides which player claims a cell matched by more than one of them. */
   readonly claimStrategy: CellClaimResolutionStrategy;
 
+  /**
+   * The mode this level always plays in, or null when the mode is chosen by the caller.
+   *
+   * A level that fixes its mode ignores the mode and start positioning
+   * supplied to {@link createSimulation}.
+   */
+  readonly mode: SimulationMode | null;
+
   private constructor(
     id: number,
     name: string,
@@ -54,6 +62,7 @@ export class Level {
     roster: LevelRoster,
     startingPattern: StartingPattern,
     claimStrategy: CellClaimResolutionStrategy,
+    mode: SimulationMode | null,
   ) {
     this.id = id;
     this.name = name;
@@ -62,6 +71,7 @@ export class Level {
     this.roster = roster;
     this.startingPattern = startingPattern;
     this.claimStrategy = claimStrategy;
+    this.mode = mode;
   }
 
   /**
@@ -74,6 +84,7 @@ export class Level {
    * @param roster - The human slot and the computer players.
    * @param startingPattern - The state of the grid at generation 0.
    * @param claimStrategy - Decides contested cells. Defaults to first match in roster order.
+   * @param mode - The mode the level always plays in. Defaults to null, leaving the mode to the caller.
    * @returns A validated Level instance.
    * @throws {RangeError} If width or height is not positive, or the roster has no computer players.
    * @throws {Error} If the human and computer players do not all have distinct ids.
@@ -86,6 +97,7 @@ export class Level {
     roster: LevelRoster,
     startingPattern: StartingPattern,
     claimStrategy?: CellClaimResolutionStrategy,
+    mode: SimulationMode | null = null,
   ): Level {
     if (width <= 0) {
       throw new RangeError("width must be a positive number");
@@ -112,6 +124,7 @@ export class Level {
       roster,
       startingPattern,
       claimStrategy ?? FirstMatchClaimStrategy.create(),
+      mode,
     );
   }
 
@@ -149,10 +162,15 @@ export class Level {
    * grid after the pattern has been applied, since a strategy picks from the
    * cells a player owns at generation 0.
    *
+   * A level that fixes its own {@link mode} plays in that mode and skips start
+   * positioning, since positions chosen for a different mode do not apply.
+   *
    * @param humanRules - Rules chosen by the human player.
    * @param hiScore - Hi-score list to record into. Defaults to the shared list.
    * @param mode - Decides which cells a generation evaluates. Defaults to the global sweep.
+   *   Ignored when the level fixes its mode.
    * @param startPositioning - Places each player on the grid. Omitted for a game without positions.
+   *   Ignored when the level fixes its mode.
    * @returns A Simulation seeded with this level's starting pattern.
    * @throws {RangeError} If humanRules is empty.
    */
@@ -169,13 +187,13 @@ export class Level {
       players,
       hiScore,
       this.claimStrategy,
-      mode,
+      this.mode ?? mode,
     );
     const simulation = Simulation.create(options);
 
     simulation.applyStartingPattern(this.startingPattern);
 
-    if (startPositioning !== undefined) {
+    if (this.mode === null && startPositioning !== undefined) {
       simulation.applyStartPositioning(startPositioning);
     }
 

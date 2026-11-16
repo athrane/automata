@@ -23,6 +23,7 @@ export {
 export type { GameConfiguration } from "./GameConfiguration";
 export { GameController } from "./GameController";
 export { GuiOptions } from "./GuiOptions";
+export { resolveEffectiveMode, resolveEffectiveStartPositioning } from "./LevelModeSelection";
 export { PlayerInputController } from "./PlayerInputController";
 export { selectRandomPresetIndices } from "./RandomRulePresetSelection";
 export type { GameParticipant } from "./GameParticipant";

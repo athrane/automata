@@ -4,6 +4,8 @@ import { HiScore } from "../../../src/simulation/hiscore/HiScore";
 import { CheckerStartingPattern } from "../../../src/simulation/level/CheckerStartingPattern";
 import { Level } from "../../../src/simulation/level/Level";
 import type { LevelRoster } from "../../../src/simulation/level/LevelRoster";
+import { ConversionSimulationMode } from "../../../src/simulation/mode/ConversionSimulationMode";
+import { GlobalSimulationMode } from "../../../src/simulation/mode/GlobalSimulationMode";
 import { PlayerLocalSimulationMode } from "../../../src/simulation/mode/PlayerLocalSimulationMode";
 import { FirstClaimedCellPositioning } from "../../../src/simulation/player/FirstClaimedCellPositioning";
 import { SumRule } from "../../../src/simulation/rule/SumRule";
@@ -356,6 +358,87 @@ describe("Level", () => {
         for (const [playerId, position] of simulation.getPlayerPositions()) {
           expect(grid[position.y][position.x].ownerId).toBe(playerId);
         }
+      });
+
+      it("defaults the level's own mode to null", () => {
+        // Arrange / Act
+        const level = createPositionedLevel();
+
+        // Assert
+        expect(level.mode).toBeNull();
+      });
+
+      it("exposes the mode it was created with", () => {
+        // Arrange
+        const mode = ConversionSimulationMode.create();
+
+        // Act
+        const level = Level.create(
+          1,
+          "Level 1",
+          4,
+          4,
+          createRoster(),
+          CheckerStartingPattern.create(2, [1, 2]),
+          undefined,
+          mode,
+        );
+
+        // Assert
+        expect(level.mode).toBe(mode);
+      });
+
+      it("runs the level's own mode instead of the supplied one", () => {
+        // Arrange — on the 4x4 checker every cell has four neighbours of each
+        // player, so no "born at 3" rule matches. The global sweep would empty
+        // the grid; the level's conversion mode keeps every cell.
+        const level = Level.create(
+          1,
+          "Level 1",
+          4,
+          4,
+          createRoster(),
+          CheckerStartingPattern.create(2, [1, 2]),
+          undefined,
+          ConversionSimulationMode.create(),
+        );
+
+        // Act
+        const simulation = level.createSimulation(
+          [new SumRule([3])],
+          HiScore.create(),
+          GlobalSimulationMode.create(),
+        );
+        simulation.run();
+
+        // Assert
+        expect(simulation.getCellCounts().get(1)).toBe(8);
+        expect(simulation.getCellCounts().get(2)).toBe(8);
+      });
+
+      it("skips start positioning when the level fixes its mode", () => {
+        // Arrange
+        const level = Level.create(
+          1,
+          "Level 1",
+          4,
+          4,
+          createRoster(),
+          CheckerStartingPattern.create(2, [1, 2]),
+          undefined,
+          ConversionSimulationMode.create(),
+        );
+
+        // Act
+        const simulation = level.createSimulation(
+          [new SumRule([3])],
+          HiScore.create(),
+          PlayerLocalSimulationMode.create(),
+          FirstClaimedCellPositioning.create(),
+        );
+
+        // Assert
+        expect(simulation.getPlayerPositions().size).toBe(0);
       });
     });
   });

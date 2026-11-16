@@ -20,6 +20,9 @@ export interface ClaimCandidate {
    * A count rather than a boolean: a player whose three rules all fire on a
    * cell matches it more strongly than one whose single rule does, and a
    * strategy cannot recover that distinction after the fact.
+   *
+   * May be `0` for an incumbent offered as a fallback candidate when no
+   * player's rules matched the cell (see `PersistentValueRuleSetApplicationStrategy`).
    */
   readonly matchedRuleCount: number;
 }

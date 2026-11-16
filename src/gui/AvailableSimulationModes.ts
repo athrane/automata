@@ -1,4 +1,4 @@
-import { GlobalSimulationMode, PlayerLocalSimulationMode } from '../simulation';
+import { ConversionSimulationMode, GlobalSimulationMode, PlayerLocalSimulationMode } from '../simulation';
 
 import type { SimulationMode } from '../simulation';
 
@@ -33,5 +33,11 @@ export const AVAILABLE_SIMULATION_MODES: ReadonlyArray<SimulationModeOption> = [
     description: 'Each player holds a position and its rules apply only to the cells it owns plus the cell it stands on, so territory cannot be taken from another player.',
     mode: PlayerLocalSimulationMode.create(),
     requiresStartPositioning: true,
+  },
+  {
+    name: 'Conversion simulation',
+    description: 'Every cell is evaluated each generation, and a cell keeps its value until a rule converts it, so territory is held and taken by moving fronts.',
+    mode: ConversionSimulationMode.create(),
+    requiresStartPositioning: false,
   },
 ];

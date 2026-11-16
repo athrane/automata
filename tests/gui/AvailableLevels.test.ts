@@ -1,8 +1,8 @@
 import { AVAILABLE_LEVELS } from "../../src/gui/AvailableLevels";
 
 describe("AVAILABLE_LEVELS", () => {
-  it("lists the three fixed levels in id order", () => {
-    expect(AVAILABLE_LEVELS.map((level) => level.id)).toEqual([1, 2, 3]);
+  it("lists the four fixed levels in id order", () => {
+    expect(AVAILABLE_LEVELS.map((level) => level.id)).toEqual([1, 2, 3, 4]);
   });
 
   it("lists the levels by their display names", () => {
@@ -10,6 +10,7 @@ describe("AVAILABLE_LEVELS", () => {
       "Level 1",
       "Level 2",
       "Level 3",
+      "Level 4",
     ]);
   });
 });

@@ -4,6 +4,7 @@ export { Level } from "./Level";
 export { LEVEL_ONE, LEVEL_ONE_STARTING_PATTERN } from "./LevelOne";
 export { LEVEL_TWO, LEVEL_TWO_STARTING_PATTERN } from "./LevelTwo";
 export { LEVEL_THREE, LEVEL_THREE_STARTING_PATTERN } from "./LevelThree";
+export { LEVEL_FOUR, LEVEL_FOUR_STARTING_PATTERN } from "./LevelFour";
 export { RectanglesStartingPattern } from "./RectanglesStartingPattern";
 export type { HumanPlayerSlot } from "./HumanPlayerSlot";
 export type { LevelRoster } from "./LevelRoster";

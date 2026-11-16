@@ -19,9 +19,11 @@ export interface CellClaimResolutionStrategy {
    *
    * The candidates are never empty and are ordered by {@link ClaimCandidate.rosterIndex}
    * ascending. The returned value must be the id of one of the candidates, or null;
-   * returning any other id would put a player on the grid whose rules did not match.
+   * returning any other id would put a player on the grid that was not eligible for the cell.
+   * A candidate may carry a `matchedRuleCount` of 0 when it is an incumbent offered as a
+   * fallback because no player's rules matched.
    *
-   * @param candidates - The players whose rules matched, in roster order.
+   * @param candidates - The players eligible for the cell, in roster order.
    * @param context - The cell being resolved and the state surrounding it.
    * @returns The winning player's id, or null when no player claims the cell.
    */

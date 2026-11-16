@@ -6,6 +6,7 @@ export {
   IncumbentClaimStrategy,
   NeighbourMajorityClaimStrategy,
   OwnershipEligibilityRuleSetApplicationStrategy,
+  PersistentValueRuleSetApplicationStrategy,
   RotatingPriorityClaimStrategy,
   StrongestMatchClaimStrategy,
   UnrestrictedRuleSetApplicationStrategy,
@@ -29,11 +30,14 @@ export {
   LEVEL_TWO_STARTING_PATTERN,
   LEVEL_THREE,
   LEVEL_THREE_STARTING_PATTERN,
+  LEVEL_FOUR,
+  LEVEL_FOUR_STARTING_PATTERN,
   RectanglesStartingPattern,
 } from "./level";
 export type { HumanPlayerSlot, LevelRoster, RectangleRegion, StartingPattern } from "./level";
 export {
   ConfigurableSimulationMode,
+  ConversionSimulationMode,
   GlobalSimulationMode,
   PlayerLocalSimulationMode,
 } from "./mode";
@@ -45,6 +49,14 @@ export {
 } from "./iteration";
 export type { IterationStrategy } from "./iteration";
 export { FirstClaimedCellPositioning, RandomClaimedCellPositioning } from "./player";
+export {
+  ConversionRule,
+  EmptyCellSelector,
+  OtherPlayerCellSelector,
+  OwnCellSelector,
+  SpecificPlayerCellSelector,
+} from "./rule";
+export type { CellSelector } from "./rule";
 export type { GridPosition, Player, StartPositioningStrategy } from "./player";
 export { wrapCoordinate } from "./WrapCoordinate";
 export { SimulationOptions } from "./SimulationOptions";

@@ -18,6 +18,13 @@ const HUMAN_PLAYER_COLOR = 0xff0000;
 const COMPUTER_PLAYER_COLORS: ReadonlyArray<number> = [0x0080ff, 0x00cc44, 0xffcc00];
 
 /**
+ * Three.js hex colours of participants that only a fixed level adds, numbered
+ * after the computer players. Kept apart from {@link COMPUTER_PLAYER_COLORS},
+ * since a custom game creates one computer player per entry of that array.
+ */
+const LEVEL_ONLY_PLAYER_COLORS: ReadonlyArray<number> = [0xcc44ff];
+
+/**
  * Three.js hex colour of a player whose id has no entry in {@link PLAYER_COLORS},
  * so a level that adds a participant still renders.
  */
@@ -26,7 +33,7 @@ const DEFAULT_PLAYER_COLOR = 0xffffff;
 /** Three.js hex colour of each player's cells, keyed by player id. */
 const PLAYER_COLORS: ReadonlyMap<number, number> = new Map([
   [HUMAN_PLAYER_ID, HUMAN_PLAYER_COLOR],
-  ...COMPUTER_PLAYER_COLORS.map(
+  ...[...COMPUTER_PLAYER_COLORS, ...LEVEL_ONLY_PLAYER_COLORS].map(
     (color, index): [number, number] => [HUMAN_PLAYER_ID + index + 1, color],
   ),
 ]);

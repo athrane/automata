@@ -1,6 +1,6 @@
 import { createLevelParticipants } from "../../src/gui/GameParticipants";
 import type { Player } from "../../src/simulation/player/Player";
-import { LEVEL_ONE } from "../../src/simulation";
+import { LEVEL_FOUR, LEVEL_ONE } from "../../src/simulation";
 import { SumRule } from "../../src/simulation/rule";
 
 describe("createLevelParticipants", () => {
@@ -42,6 +42,18 @@ describe("createLevelParticipants", () => {
 
     // Assert
     expect(participants[0].player).toBe(players[0]);
+  });
+
+  it("gives level 4's fifth participant a colour distinct from the other four", () => {
+    // Arrange
+    const players = LEVEL_FOUR.createPlayers([new SumRule([3])]);
+
+    // Act
+    const colors = createLevelParticipants(players).map((participant) => participant.color);
+
+    // Assert
+    expect(colors[4]).not.toBe(0xffffff);
+    expect(new Set(colors).size).toBe(5);
   });
 
   it("falls back to a default colour for an id the palette does not cover", () => {

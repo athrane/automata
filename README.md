@@ -121,6 +121,12 @@ matching rules, and which owner to fall back to when no candidate wins — steps
 |-----------------|------------------------|---------------------------|
 | `UnrestrictedRuleSetApplicationStrategy` | Every roster player | Always null — a cell no player matches is fully unowned. Used by global simulation. |
 | `OwnershipEligibilityRuleSetApplicationStrategy` | Only the cell's current owner, or its occupant when unowned | The same eligible player, even when its rules do not match — a dormant claim. Used by player local simulation. |
+| `PersistentValueRuleSetApplicationStrategy` | Whatever the strategy it wraps decides; when that yields no candidate, the player currently holding the cell, with a match count of 0 | Whatever the wrapped strategy decides. Used by conversion simulation, wrapping `UnrestrictedRuleSetApplicationStrategy`. |
+
+`PersistentValueRuleSetApplicationStrategy` is a decorator: `create(inner)` takes another
+rule-set application strategy and only adds the incumbent fallback, so a cell no rule matches
+keeps its value instead of going empty. Any matching rule still beats the incumbent, because
+the incumbent is offered only when the wrapped strategy returned no candidate.
 
 #### Claim-resolution strategy
 
@@ -141,14 +147,15 @@ leave undecided) and their fuller effect on play.
 
 ### Game modes
 
-A game is played in one of three modes: two chosen at the top of the game-configuration
-screen, and a third assembled in code from the strategies above. The mode decides *which*
+A game is played in one of four modes: three presets chosen at the top of the
+game-configuration screen, and a custom pairing assembled from the strategies above. The mode decides *which*
 cells a generation evaluates; the claim strategy below decides *who* owns each of them.
 
 | Mode | What a generation evaluates |
 |------|-----------------------------|
 | **Global simulation** | Every cell of the grid, against every player's rules. The default, and the only mode the game had before this option existed |
 | **Player local simulation** | For each player, only the cells that player owns plus the single cell it stands on, against that player's own rules |
+| **Conversion simulation** | Every cell of the grid, against every player's rules; a cell no rule matches keeps its value |
 | **Custom simulation** | Whatever `IterationStrategy` and `RuleSetApplicationStrategy` pairing is selected, either on the game-configuration screen or assembled in code |
 
 #### Global simulation
@@ -202,13 +209,78 @@ Both read the grid after the starting pattern has been applied, so a player alwa
 inside its own territory. `RandomClaimedCellPositioning` consults `Math.random()` once per
 player at game start, which is the one exception to the determinism guarantee below.
 
+#### Conversion simulation
+
+| Strategy | Implementation |
+|----------|-----------------|
+| `IterationStrategy` | `SweepAllCellsIterationStrategy` |
+| `RuleSetApplicationStrategy` | `PersistentValueRuleSetApplicationStrategy` wrapping `UnrestrictedRuleSetApplicationStrategy` |
+| `CellClaimResolutionStrategy` | Configurable independently of the mode — every strategy returns a sole incumbent unchanged |
+
+Conversion simulation holds territory between generations. Every cell is swept, and a cell no
+player's rules match keeps its value, so regions stay put and change only where a rule
+converts them. The result is a moving front — one colour sweeping through another — rather
+than the churn of the global mode.
+
+Conversions are written with `ConversionRule`, which, unlike `SumRule`, looks at what the
+resolved cell currently holds and which *other* players surround it:
+
+```ts
+ConversionRule.create(target, trigger, counts);
+```
+
+The rule matches when `target` selects the cell's current value and the number of Moore
+neighbours `trigger` selects is in `counts` (integers 0–8). A rule belongs to the player the
+cell becomes. Target and trigger are `CellSelector`s:
+
+| Selector | Selects |
+|----------|---------|
+| `OwnCellSelector` | Cells held by the player the rule is evaluated for |
+| `OtherPlayerCellSelector` | Cells held by any other player |
+| `EmptyCellSelector` | Empty cells |
+| `SpecificPlayerCellSelector.create(n)` | Cells held by player `n`, whoever evaluates the rule |
+
+The first three are relative, so one rule instance can be shared between players; the fourth
+names a fixed colour, so a level can script a chain between particular players.
+
+**Takeover.** A converter (player 3) taking gas (player 2) wherever two or more converter cells
+border it — a front that advances one cell per generation:
+
+```ts
+ConversionRule.create(SpecificPlayerCellSelector.create(2), OwnCellSelector.create(), [2, 3, 4, 5, 6, 7, 8]);
+```
+
+**Catalyst.** A product (player 5) taking converter cells beside a stationary catalyst
+(player 4). The catalyst has no rules of its own and never changes; the product appears only
+around it:
+
+```ts
+ConversionRule.create(SpecificPlayerCellSelector.create(3), SpecificPlayerCellSelector.create(4), [1, 2, 3, 4, 5, 6, 7, 8]);
+```
+
+Three conversion presets are offered on the configuration screen alongside the sum presets:
+
+| Preset | Rule |
+|--------|------|
+| Overrun at 3+ | Another player's cell becomes mine when 3–8 of its neighbours are mine |
+| Infiltrate at 1–2 | Another player's cell becomes mine when 1 or 2 of its neighbours are mine |
+| Settle at 1+ | An empty cell becomes mine when 1–8 of its neighbours are mine |
+
+A computer player in a custom game draws its three presets from the whole catalogue, so it may
+draw conversion presets; in the global mode they act as extra takeover rules. Under the
+conversion mode a "Born" sum preset already takes other players' cells when its count is met,
+and a "Survive" preset is redundant, since cells persist anyway.
+
+A conversion game keeps every cell alive, so the "no living cells" game over never triggers
+and no hi-score is recorded: it runs until the player leaves through **Exit**.
+
 #### Custom simulation
 
-Unlike the two presets above, custom simulation has no fixed strategy configuration: it is
+Unlike the three presets above, custom simulation has no fixed strategy configuration: it is
 `ConfigurableSimulationMode` constructed directly from whatever `IterationStrategy` and
 `RuleSetApplicationStrategy` a caller supplies — any of the built-in implementations listed
 in "Available strategy implementations" above, or new ones written to fit. The
-claim-resolution strategy is configured the same way as for the two presets, independently
+claim-resolution strategy is configured the same way as for the presets, independently
 of this choice.
 
 `GlobalSimulationMode.create()` and `PlayerLocalSimulationMode.create()` are just:
@@ -283,7 +355,11 @@ each computer player is a full `Player`.
 | Method | Description |
 |--------|-------------|
 | `level.createPlayers(humanRules)` | Assemble the roster, human first, with the supplied rules |
-| `level.createSimulation(humanRules, hiScore?)` | Build a `Simulation` at generation 0 with the starting pattern applied |
+| `level.createSimulation(humanRules, hiScore?, mode?, startPositioning?)` | Build a `Simulation` at generation 0 with the starting pattern applied |
+
+A level may also fix its own game mode, passed as the eighth argument to `Level.create` and
+exposed as `level.mode` (`null` when the mode is left to the player). A level that fixes its
+mode plays in it whatever `mode` is passed to `createSimulation`, and skips start positioning.
 
 #### Level 1
 
@@ -363,11 +439,38 @@ all the action is — everything outside it is empty, one character per 5 cells:
 
 Each participant opens with 400 cells, the same as Level 2 — only their placement differs.
 
+#### Level 4
+
+A 100×100 field of gas, always played in conversion simulation (see "Game modes" above). A
+converter block at the centre sweeps outward through the gas; when its front reaches one of
+eight single-cell catalysts, product forms around the catalyst and then spreads back through
+the converter's territory.
+
+| id | Name | Colour | Rules |
+|----|------|--------|-------|
+| 1 | `Player 1` | red | Chosen on the configuration screen |
+| 2 | `Gas` | blue | None |
+| 3 | `Converter` | green | A gas cell with 2–8 converter neighbours becomes converter |
+| 4 | `Catalyst` | yellow | None |
+| 5 | `Product` | purple | A converter cell with 1–8 catalyst neighbours, or with 2–8 product neighbours, becomes product |
+
+| Region | Owner |
+|--------|-------|
+| Single cells at (30,30), (70,30), (30,70), (70,70), (50,20), (50,80), (25,50), (75,50) | Catalyst |
+| 10×10 block at (10,45) | Player 1 |
+| 6×6 block at (47,47) | Converter |
+| Every other cell | Gas |
+
+Product starts with no cells. The block sizes, catalyst positions and neighbour counts are a
+starting point chosen to make both waves visible.
+
 #### Choosing a level
 
 The game-configuration screen opens with a **Game mode** selector (see "Game modes" above)
-followed by a level selector offering Level 1, Level 2, Level
-3, and a **Custom** option. Choosing "Custom" reveals two more pickers: a **starting
+followed by a level selector offering Level 1, Level 2, Level 3, Level 4, and a **Custom**
+option. Selecting a level that fixes its own game mode, such as Level 4, hides the mode,
+custom-mode and positioning controls and shows a notice in their place; selecting any other
+level restores them. Choosing "Custom" reveals two more pickers: a **starting
 pattern** (the checker from Level 1, or either rectangle layout from Level 2 and Level 3)
 and a **claim strategy** (any of the six strategies below). A custom level keeps Level 1's
 grid size and roster — only the pattern and the strategy vary — so it always starts four
@@ -385,6 +488,7 @@ picker and a **Rule-set application** picker:
 |----------|-------------------------------------|
 | `UnrestrictedRuleSetApplicationStrategy` | Every player. Matches the default mode |
 | `OwnershipEligibilityRuleSetApplicationStrategy` | Only the cell's current owner or the player standing on it |
+| `PersistentValueRuleSetApplicationStrategy` | Every player, and a cell no rule matches keeps its value ("Cells keep their value") |
 
 Choosing an iteration strategy that needs positions reveals the **Player positioning**
 picker described above, exactly as selecting player local simulation does.
