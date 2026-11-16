@@ -1,4 +1,4 @@
-import { createLevelParticipants } from "../../src/gui/GameParticipants";
+import { createLevelParticipants, resolvePlayerColor } from "../../src/gui/GameParticipants";
 import type { Player } from "../../src/simulation/player/Player";
 import { LEVEL_FOUR, LEVEL_ONE } from "../../src/simulation";
 import { SumRule } from "../../src/simulation/rule";
@@ -73,5 +73,15 @@ describe("createLevelParticipants", () => {
 
     // Assert
     expect(participants).toHaveLength(0);
+  });
+});
+
+describe("resolvePlayerColor", () => {
+  it("returns the palette colour for a known id", () => {
+    expect(resolvePlayerColor(2)).toBe(0x0080ff);
+  });
+
+  it("returns the default colour for an id the palette does not cover", () => {
+    expect(resolvePlayerColor(99)).toBe(0xffffff);
   });
 });

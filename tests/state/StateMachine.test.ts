@@ -76,6 +76,38 @@ describe('StateMachine', () => {
       expect(machine.currentState).toBe('title-screen');
     });
 
+    it('transitions from title-screen to particle-game', () => {
+      // Arrange
+      const machine = StateMachine.create('title-screen');
+
+      // Act
+      machine.transition('particle-game');
+
+      // Assert
+      expect(machine.currentState).toBe('particle-game');
+    });
+
+    it('transitions from particle-game to title-screen when the player exits', () => {
+      // Arrange
+      const machine = StateMachine.create('particle-game');
+
+      // Act
+      machine.transition('title-screen');
+
+      // Assert
+      expect(machine.currentState).toBe('title-screen');
+    });
+
+    it('throws when transitioning from particle-game to game', () => {
+      // Arrange
+      const machine = StateMachine.create('particle-game');
+
+      // Act / Assert
+      expect(() => machine.transition('game')).toThrow(
+        "Invalid state transition from 'particle-game' to 'game'",
+      );
+    });
+
     it('throws when transitioning to an invalid state', () => {
       // Arrange
       const machine = StateMachine.create('title-screen');

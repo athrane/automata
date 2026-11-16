@@ -44,6 +44,19 @@ export {
 export type { GenerationContext, SimulationMode } from "./mode";
 export { NeighborhoodUtils } from "./NeighborhoodUtils";
 export {
+  DEFAULT_REPULSION_RATIO,
+  ForceMatrix,
+  PARTICLE_LEVEL_ONE,
+  ParticleLevel,
+  ParticleLifeForceLaw,
+  ParticleSimulation,
+  ParticleSimulationOptions,
+  SeededRandom,
+  SpatialHash,
+  wrapDelta,
+} from "./particle";
+export type { ForceLaw, Particle, ParticlePopulation } from "./particle";
+export {
   OwnedCellIterationStrategy,
   SweepAllCellsIterationStrategy,
 } from "./iteration";

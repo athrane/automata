@@ -3,4 +3,5 @@ export type GameState =
   | 'title-screen'
   | 'game-configuration'
   | 'game'
-  | 'game-over';
+  | 'game-over'
+  | 'particle-game';

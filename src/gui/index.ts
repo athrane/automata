@@ -1,3 +1,4 @@
+export { AVAILABLE_PARTICLE_LEVELS } from "./AvailableParticleLevels";
 export { AVAILABLE_ITERATION_STRATEGIES } from "./AvailableIterationStrategies";
 export type { IterationStrategyOption } from "./AvailableIterationStrategies";
 export { AVAILABLE_RULE_PRESETS } from "./AvailableRulePresets";
@@ -27,7 +28,14 @@ export { resolveEffectiveMode, resolveEffectiveStartPositioning } from "./LevelM
 export { PlayerInputController } from "./PlayerInputController";
 export { selectRandomPresetIndices } from "./RandomRulePresetSelection";
 export type { GameParticipant } from "./GameParticipant";
-export { createGameParticipants, HUMAN_PLAYER_ID, HUMAN_PLAYER_NAME } from "./GameParticipants";
+export {
+  createGameParticipants,
+  HUMAN_PLAYER_ID,
+  HUMAN_PLAYER_NAME,
+  resolvePlayerColor,
+} from "./GameParticipants";
+export { ParticleRenderer } from "./ParticleRenderer";
+export { resolveParticleTimeStep } from "./ParticleTimeStep";
 export type { RulePreset } from "./RulePreset";
 export { SimulationRenderer } from "./SimulationRenderer";
 export { SimulationSpeed } from "./SimulationSpeed";

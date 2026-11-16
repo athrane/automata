@@ -42,6 +42,10 @@ The browser GUI (`SimulationRenderer`) is automatically skipped in Node.js — o
 
 The project includes a Three.js browser renderer under `src/gui/`.
 
+The title screen offers two entries: **Play game** leads to the game-configuration screen
+for a grid game, and **Particle lab** starts particle level 1 directly (see "Particle
+simulation" below).
+
 ### Development server
 
 Start the Vite dev server for live development with Hot Module Replacement:
@@ -309,6 +313,74 @@ selected pair is assembled into a `ConfigurableSimulationMode` when the game sta
 code-level `ConfigurableSimulationMode.create(...)` route above remains available for
 strategies not in either catalogue.
 
+### Particle simulation
+
+Beside the grid engine sits a particle engine (`src/simulation/particle/`). Particles have
+floating-point positions and velocities, and each has a type — a player id — that never
+changes. Instead of cells taking values, particles move: each is pulled toward or pushed away
+from the particles around it according to their types.
+
+The world wraps at its edges, like the grid: a particle leaving the right edge re-enters on
+the left, and two particles on opposite edges are treated as close, so forces act across an
+edge.
+
+#### Force matrix
+
+A `ForceMatrix` holds one attraction in `[-1, 1]` per pair of types. **Row** = the type of
+the particle being moved, **column** = the type of the neighbour acting on it. The matrix need
+not be symmetric: type 1 can chase type 2 while type 2 flees type 1. A pair the matrix does
+not list has attraction 0.
+
+#### Force law
+
+Every pair closer than the interaction radius exerts a force along the line between them.
+Its magnitude comes from the `ParticleLifeForceLaw`, measured in fractions of the
+interaction radius:
+
+| Distance / radius | Force |
+|-------------------|-------|
+| Below the repulsion ratio (default 0.3) | Repulsion for every pair, from full strength at contact to 0 at the ratio, whatever the matrix says |
+| Repulsion ratio to 1 | The matrix's attraction, scaled by a triangle that is 0 at both ends and full strength midway |
+| 1 and beyond | None |
+
+The repulsion keeps a cluster from collapsing to a point; the attraction band is where the
+matrix decides who gathers with whom.
+
+#### Time step and speed
+
+`ParticleSimulation.step(timeStep)` computes every particle's force from the positions the
+step starts from, then multiplies each velocity by `friction ** timeStep` (default friction
+0.75), adds the force times `forceScale * timeStep` (default 0.05), and moves the particle by
+its velocity times `timeStep`. Raising friction to the time step keeps damping consistent
+when the step size changes.
+
+The particle screen steps once per animation frame at every speed level. A speed level
+changes the size of the step, not how often one is taken: the fastest level steps by 1, and
+each slower level by `1 / framesPerGeneration` (down to 1/16), so motion stays smooth at the
+slowest setting. The speed bar's "Exit" returns to the title screen; there is no score and no
+end.
+
+#### Particle level 1
+
+| Property | Value |
+|----------|-------|
+| World | 200 × 200, wrapping at the edges |
+| Interaction radius | 10 |
+| Populations | 300 particles of each of types 1, 2, 3 and 4 (1,200 in all) |
+
+Force matrix (row = particle moved, column = neighbour):
+
+| | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|
+| **1** | 0.8 | 0.3 | -0.4 | 0.0 |
+| **2** | -0.3 | 0.8 | 0.3 | -0.4 |
+| **3** | 0.0 | -0.3 | 0.8 | 0.3 |
+| **4** | 0.3 | 0.0 | -0.4 | 0.8 |
+
+Each type attracts itself, so it clusters; each is drawn to the next type and pushed away by
+the previous one, so clusters chase each other. Particles are drawn as discs in their
+player's colour, as wide as the repulsion distance.
+
 ### In-game controls
 
 In player local simulation, the human player walks its position with the keyboard:
@@ -546,6 +618,10 @@ Player local simulation adds two inputs the guarantee does not cover: the human'
 and `RandomClaimedCellPositioning` when it is the selected positioning strategy. With
 `FirstClaimedCellPositioning` and no keypresses, a player local game is as reproducible as a
 global one.
+
+A particle level is reproducible in the same way: its start positions are drawn from a
+`SeededRandom` created from the level's own seed, so every start of the same level opens on
+the same arrangement, and stepping it with the same time steps gives the same positions.
 
 ### Hi-score
 

@@ -2,10 +2,11 @@ import type { GameState } from './GameState';
 
 /** Maps each state to the states it is permitted to transition into. */
 const VALID_TRANSITIONS: Readonly<Record<GameState, ReadonlyArray<GameState>>> = {
-  'title-screen': ['game-configuration'],
+  'title-screen': ['game-configuration', 'particle-game'],
   'game-configuration': ['game'],
   'game': ['game-over', 'title-screen'],
   'game-over': ['title-screen'],
+  'particle-game': ['title-screen'],
 };
 
 /**

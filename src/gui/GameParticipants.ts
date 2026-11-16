@@ -86,8 +86,18 @@ export function createGameParticipants(selectedPresets: RulePreset[]): GameParti
 export function createLevelParticipants(players: ReadonlyArray<Player>): GameParticipant[] {
   return players.map((player) => ({
     player,
-    color: PLAYER_COLORS.get(player.id) ?? DEFAULT_PLAYER_COLOR,
+    color: resolvePlayerColor(player.id),
   }));
+}
+
+/**
+ * Returns the colour a player's cells or particles are drawn in.
+ *
+ * @param playerId - The player id to look up.
+ * @returns The palette colour for the id, or a default colour when the palette does not cover it.
+ */
+export function resolvePlayerColor(playerId: number): number {
+  return PLAYER_COLORS.get(playerId) ?? DEFAULT_PLAYER_COLOR;
 }
 
 /**

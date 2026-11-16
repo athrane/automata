@@ -1,6 +1,13 @@
 import { StateMachine } from '../state';
+import { AVAILABLE_PARTICLE_LEVELS } from './AvailableParticleLevels';
 import { installDesignStyleSheet } from './design/DesignStyleSheet';
-import { GameConfigurationScreen, GameOverScreen, GamePlayingScreen, TitleScreen } from './screens';
+import {
+  GameConfigurationScreen,
+  GameOverScreen,
+  GamePlayingScreen,
+  ParticlePlayingScreen,
+  TitleScreen,
+} from './screens';
 import type { GameConfiguration } from './GameConfiguration';
 
 /**
@@ -12,6 +19,10 @@ import type { GameConfiguration } from './GameConfiguration';
  *
  * A running game can also be abandoned via the in-game "Exit" button, which
  * moves directly from `game` back to `title-screen`.
+ *
+ * The title screen's "Particle lab" button leads to a separate branch,
+ * `title-screen` → `particle-game` → `title-screen`, which runs until the
+ * player exits.
  *
  * Constructing a controller also installs the design programme's stylesheet,
  * which every screen styles itself from.
@@ -25,6 +36,7 @@ export class GameController {
   private readonly configScreen: GameConfigurationScreen;
   private readonly gamePlayingScreen: GamePlayingScreen;
   private readonly gameOverScreen: GameOverScreen;
+  private readonly particlePlayingScreen: ParticlePlayingScreen;
 
   private constructor(container: HTMLElement) {
     this.container = container;
@@ -44,6 +56,12 @@ export class GameController {
       container,
       () => this.gamePlayingScreen.getHiScores(),
       () => { this.handlePlayGame(); },
+      () => { this.handlePlayParticles(); },
+    );
+
+    this.particlePlayingScreen = ParticlePlayingScreen.create(
+      container,
+      () => { this.handleExitParticles(); },
     );
 
     this.configScreen = GameConfigurationScreen.create(
@@ -101,6 +119,18 @@ export class GameController {
   private handleExitGame(): void {
     this.stateMachine.transition('title-screen');
     this.gamePlayingScreen.hide();
+    this.titleScreen.show();
+  }
+
+  private handlePlayParticles(): void {
+    this.stateMachine.transition('particle-game');
+    this.titleScreen.hide();
+    this.particlePlayingScreen.show(AVAILABLE_PARTICLE_LEVELS[0]);
+  }
+
+  private handleExitParticles(): void {
+    this.stateMachine.transition('title-screen');
+    this.particlePlayingScreen.hide();
     this.titleScreen.show();
   }
 
